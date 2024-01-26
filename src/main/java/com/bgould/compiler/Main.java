@@ -51,4 +51,3 @@ public class Main {
     reserve.PrintReserveTable(args[0]);
   }
 }
-

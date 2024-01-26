@@ -39,10 +39,10 @@ public class ReserveTable {
    */
   public String LookupCode(int code) { return ""; }
 
-		/**
-		 * Pretty prints the contents of the ReserveTable. Empty rows are not printed
-		 *
-		 * @param filename The name of the file to print to.
-		 */
+  /**
+   * Pretty prints the contents of the ReserveTable. Empty rows are not printed
+   *
+   * @param filename The name of the file to print to.
+   */
   public void PrintReserveTable(String filename) {}
 }
