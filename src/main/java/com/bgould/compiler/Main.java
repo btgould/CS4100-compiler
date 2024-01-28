@@ -1,23 +1,7 @@
 package com.bgould.compiler;
 
-import com.bgould.compiler.ADT.*;
+import com.bgould.compiler.ADT.ReserveTable;
 
-/**
- *
- * @author abrouill
- */
-/********************** FREE BONUS FUNCTION
-String pad(String input, int len, boolean left) {
-    while (input.length() < len){
-        if (left)
-          input = " " +input ;
-        else
-          input = input + " ";
-    }
-    return input;
-}
-
-*/
 public class Main {
 
   /**
@@ -25,7 +9,7 @@ public class Main {
    */
   public static void main(String[] args) {
     // Create the table
-    System.out.println("StudentFirst StudentLast CS4100 Homework 1, Fall 2022");
+    System.out.println("Brendan Gould CS4100 Homework 1, Spring 2024");
     ReserveTable reserve = new ReserveTable(25);
 
     // Add to the table
