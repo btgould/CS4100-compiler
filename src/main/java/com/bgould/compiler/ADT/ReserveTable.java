@@ -22,11 +22,20 @@ public class ReserveTable {
    * Appends a new row to the ReserveTable. Duplicates are allowed, and entries
    * are not sorted in any way
    *
+   * If the ReserveTable is already full, no item will be added and -1 is
+   * returned.
+   *
    * @param name The name of the row in the ReserveTable
    * @param code The code of the row
-   * @return The index of the added row in the ReserveTable
+   * @return The index of the added row in the ReserveTable (or -1, if the table
+   *     is full)
    */
   public int Add(String name, int code) {
+    if (count == names.length) {
+      System.err.println("Cannot add row to ReserveTable; already full");
+      return -1;
+    }
+
     names[count] = name;
     codes[count] = code;
     return count++;

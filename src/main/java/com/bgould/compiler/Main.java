@@ -10,7 +10,7 @@ public class Main {
   public static void main(String[] args) {
     // Create the table
     System.out.println("Brendan Gould CS4100 Homework 1, Spring 2024");
-    ReserveTable reserve = new ReserveTable(25);
+    ReserveTable reserve = new ReserveTable(4);
 
     // Add to the table
     reserve.Add("cat", 15);
