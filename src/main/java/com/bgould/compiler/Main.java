@@ -1,37 +1,71 @@
 package com.bgould.compiler;
 
-import com.bgould.compiler.ADT.ReserveTable;
+import com.bgould.compiler.ADT.QuadTable;
+import com.bgould.compiler.ADT.SymbolTable;
 
 public class Main {
 
-	/**
-	 * @param args the command line arguments
-	 */
 	public static void main(String[] args) {
-		// Create the table
-		System.out.println("Brendan Gould CS4100 Homework 1, Spring 2024");
-		ReserveTable reserve = new ReserveTable(4);
+		// Create the tables
+		SymbolTable symbols = new SymbolTable(25);
+		QuadTable quads = new QuadTable(50);
+		int index;
+		int[] quadRow = new int[4];
 
-		// Add to the table
-		reserve.Add("cat", 15);
-		reserve.Add("APPLE", 11);
-		reserve.Add("Dog", 5);
-		reserve.Add("DOnE", 21);
-		reserve.Add("Over", 8);
-
-		// Search the table
-		System.out.println("The Code for 'over' is " + reserve.LookupName("over"));
-		System.out.println("The Code for 'DOG' is " + reserve.LookupName("DOG"));
-		System.out.println("The Code for 'Cat' is " + reserve.LookupName("Cat"));
-		System.out.println("The Code for 'gone' is " + reserve.LookupName("gone"));
+		// Required student name header
+		System.out.println("Brendan Gould CS4100 Homework 2, Spring 2024");
 		System.out.println();
-		System.out.println("The Name for 11 is " + reserve.LookupCode(11));
-		System.out.println("The Name for 5 is " + reserve.LookupCode(5));
-		System.out.println("The Name for 8 is " + reserve.LookupCode(8));
-		System.out.println("The Name for 28 is " + reserve.LookupCode(28));
 
-		// Print table to file
-		System.out.println("Saving Printed Table to " + args[0]);
-		reserve.PrintReserveTable(args[0]);
+		// Quad table tests
+		System.out.println("Testing the Quad Table\n");
+		System.out.println("At the start, NextQuad is: " + quads.NextQuad());
+		quads.AddQuad(4, 3, 2, 1);
+		System.out.println("After one add, NextQuad is: " + quads.NextQuad());
+
+		// Add stuff
+		quads.AddQuad(1, 2, 3, 4);
+		quads.AddQuad(2, 2, 2, 2);
+		quads.AddQuad(0, 0, 0, 0);
+		quads.AddQuad(1, 3, 5, 9);
+
+		// Look for stuff
+		quadRow = quads.GetQuad(4);
+		System.out.println("Quad row at index 4 is: " + quadRow[0] + ", " + quadRow[1] + ", " +
+		                   quadRow[2] + ", " + quadRow[3]);
+		quads.UpdateJump(4, 17);
+		quadRow = quads.GetQuad(4);
+		System.out.println("Quad row at index 4 is: " + quadRow[0] + ", " + quadRow[1] + ", " +
+		                   quadRow[2] + ", " + quadRow[3]);
+
+		System.out.println("Finally NextQuad is: " + quads.NextQuad());
+
+		System.out.println("Printing QuadTable to file " + args[0]);
+		quads.PrintQuadTable(args[0]);
+
+		// Symbol table tests
+		System.out.println();
+		System.out.println("Testing the Symbol Table\n");
+
+		// Add stuff
+		symbols.AddSymbol("TestInt", 'V', 27);
+		symbols.AddSymbol("TestDouble", 'V', 42.25);
+		symbols.AddSymbol("TestString", 'V', "Nevermind the furthermore...");
+		symbols.AddSymbol("135", 'C', 135);
+		symbols.AddSymbol("3.1415", 'C', 3.1415);
+		symbols.AddSymbol("Please Enter A Value", 'C', "Please Enter A Value");
+
+		// Look for stuff
+		index = symbols.LookupSymbol("testint");
+		System.out.println("testint is located at " + index);
+		index = symbols.LookupSymbol("3.1415");
+		System.out.println("PI is located at " + index);
+		System.out.println(" the KIND for PI is " + symbols.GetUsage(index));
+		System.out.println("The KIND for slot 5 is " + symbols.GetUsage(5) + ", data type is " +
+		                   symbols.GetDataType(5) + " and the value: " + symbols.GetString(5));
+		index = symbols.LookupSymbol("BadVal");
+		System.out.println("BadVal search returned " + index + '\n');
+
+		System.out.println("Printing SymbolTable to file " + args[1]);
+		symbols.PrintSymbolTable(args[1]);
 	}
 }
