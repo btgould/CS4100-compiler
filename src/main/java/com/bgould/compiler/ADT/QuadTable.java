@@ -126,8 +126,7 @@ public class QuadTable {
 		return repr;
 	}
 
-	private int maxSize;
-	private int count;
-
-	private int[][] quads;
+	private int maxSize;   // maximum number of operations that fit in this table
+	private int count;     // number of operations currently in this table
+	private int[][] quads; // list of operations stored in the table
 }
