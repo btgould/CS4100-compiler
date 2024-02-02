@@ -51,7 +51,7 @@ public class QuadTable {
 	/**
 	 * Pretty prints the contents of the QuadTable. Empty rows are not printed.
 	 *
-	 * @param filename The name of the file to print to. 
+	 * @param filename The name of the file to print to.
 	 */
 	public void PrintQuadTable(String filename) {
 		StringUtils.PrintToFile(filename, this.toString());
