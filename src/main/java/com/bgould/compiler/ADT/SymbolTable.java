@@ -215,7 +215,7 @@ public class SymbolTable {
 	 * @param index The location of the symbol to get
 	 * @return The String value of the corresponding symbol
 	 */
-	// TODO: more specific exceptions
+	// HACK: more specific exceptions
 	public String GetString(int index) { return (String) symbols.get(index).getValue(); }
 
 	/**
@@ -230,7 +230,7 @@ public class SymbolTable {
 	 * @param index The location of the symbol to get
 	 * @return The integer value of the corresponding symbol
 	 */
-	// TODO: more specific exceptions
+	// HACK: more specific exceptions
 	public int GetInteger(int index) { return (int) symbols.get(index).getValue(); }
 
 	/**
@@ -245,7 +245,7 @@ public class SymbolTable {
 	 * @param index The location of the symbol to get
 	 * @return The floating-point value of the corresponding symbol
 	 */
-	// TODO: more specific exceptions
+	// HACK: more specific exceptions
 	public double GetFloat(int index) { return (double) symbols.get(index).getValue(); }
 
 	/**
@@ -270,10 +270,9 @@ public class SymbolTable {
 		@SuppressWarnings("unchecked")
 		Symbol<Integer> sym = (Symbol<Integer>) symbols.get(
 			index); // This raises an exception if symbol is not an integer
-		// TODO: more specific exceptions
+		// HACK: more specific exceptions
 		sym.setUsage(usage);
 		sym.setValue(value);
-		// TODO: should I check for if symbol is a constant?
 	}
 
 	/**
@@ -298,10 +297,9 @@ public class SymbolTable {
 		@SuppressWarnings("unchecked")
 		Symbol<Double> sym = (Symbol<Double>) symbols.get(
 			index); // This raises an exception if symbol is not a floating-point
-		// TODO: more specific exceptions
+		// HACK: more specific exceptions
 		sym.setUsage(usage);
 		sym.setValue(value);
-		// TODO: should I check for if symbol is a constant?
 	}
 
 	/**
@@ -326,10 +324,9 @@ public class SymbolTable {
 		@SuppressWarnings("unchecked")
 		Symbol<String> sym = (Symbol<String>) symbols.get(
 			index); // This raises an exception if symbol is not a String
-		// TODO: more specific exceptions
+		// HACK: more specific exceptions
 		sym.setUsage(usage);
 		sym.setValue(value);
-		// TODO: should I check for if symbol is a constant?
 	}
 
 	/**
