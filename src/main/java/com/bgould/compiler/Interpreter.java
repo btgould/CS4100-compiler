@@ -24,8 +24,6 @@ public class Interpreter {
 	 * @param filename File to log trace data to
 	 */
 	public void InterpretQuads(QuadTable q, SymbolTable s, boolean traceOn, String filename) {
-		// TODO: implement logging
-
 		// Vars needed to execute instructions
 		programCounter = 0;
 		int[] currInstruction;
@@ -164,7 +162,7 @@ public class Interpreter {
 		qTable.AddQuad(2, 2, 1, 2);  // Multiply product by i
 		qTable.AddQuad(4, 1, 3, 1);  // Increment i
 		qTable.AddQuad(8, 0, 0, 2);  // Restart loop
-		qTable.AddQuad(6, 2, 0, 0);  // Print final product TODO: this has the wrong idx
+		qTable.AddQuad(6, 0, 0, 2);  // Print final product
 		qTable.AddQuad(0, 0, 0, 0);  // Stop
 
 		return sTableSuccess;
@@ -197,7 +195,7 @@ public class Interpreter {
 		qTable.AddQuad(4, 2, 1, 2);  // Increment sum by i
 		qTable.AddQuad(4, 1, 3, 1);  // Increment i
 		qTable.AddQuad(8, 0, 0, 2);  // Restart loop
-		qTable.AddQuad(6, 2, 0, 0);  // Print final sum TODO: this has the wrong idx
+		qTable.AddQuad(6, 0, 0, 2);  // Print final sum
 		qTable.AddQuad(0, 0, 0, 0);  // Stop
 
 		return sTableSuccess;
