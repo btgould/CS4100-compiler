@@ -139,7 +139,29 @@ public class Interpreter {
 	 *
 	 * @return true if initialization was performed successfully, false otherwise
 	 */
-	public boolean initializeFactorialTest(SymbolTable sTable, QuadTable qTable) { return true; }
+	public boolean initializeFactorialTest(SymbolTable sTable, QuadTable qTable) {
+		boolean sTableSuccess = true;
+
+		// Initialize data memory for factorial
+		sTableSuccess |= (sTable.AddSymbol("n", 'V', 10) != -1);
+		sTableSuccess |= (sTable.AddSymbol("i", 'V', 0) != -1);
+		sTableSuccess |= (sTable.AddSymbol("product", 'V', 0) != -1);
+		sTableSuccess |= (sTable.AddSymbol("1", 'C', 1) != -1);
+		sTableSuccess |= (sTable.AddSymbol("$temp", 'V', 0) != -1);
+
+		// Initialize instruction memory for factorial
+		// TODO: enumint these opcodes
+		qTable.AddQuad(5, 3, 0, 2);  // prod = 1
+		qTable.AddQuad(5, 3, 0, 1);  // i = 1
+		qTable.AddQuad(3, 1, 0, 4);  // check loop condition
+		qTable.AddQuad(10, 4, 0, 7); // exit loop if condition not met
+		qTable.AddQuad(2, 2, 1, 2);  // Multiply product by i
+		qTable.AddQuad(4, 1, 3, 1);  // Increment i
+		qTable.AddQuad(8, 0, 0, 2);  // Restart loop
+		qTable.AddQuad(6, 2, 0, 0);  // Print final product
+
+		return sTableSuccess;
+	}
 
 	/**
 	 * Hardcodes the data and instruction memory necessary to execute a simple summation program.
@@ -149,7 +171,29 @@ public class Interpreter {
 	 *
 	 * @return true if initialization was performed successfully, false otherwise
 	 */
-	public boolean initializeSummationTest(SymbolTable sTable, QuadTable qTable) { return true; }
+	public boolean initializeSummationTest(SymbolTable sTable, QuadTable qTable) {
+		boolean sTableSuccess = true;
+
+		// Initialize data memory for factorial
+		sTableSuccess |= (sTable.AddSymbol("n", 'V', 10) != -1);
+		sTableSuccess |= (sTable.AddSymbol("i", 'V', 0) != -1);
+		sTableSuccess |= (sTable.AddSymbol("sum", 'V', 0) != -1);
+		sTableSuccess |= (sTable.AddSymbol("1", 'C', 1) != -1);
+		sTableSuccess |= (sTable.AddSymbol("$temp", 'V', 0) != -1);
+
+		// Initialize instruction memory for factorial
+		// TODO: enumint these opcodes
+		qTable.AddQuad(5, 3, 0, 2);  // prod = 1
+		qTable.AddQuad(5, 3, 0, 1);  // i = 1
+		qTable.AddQuad(3, 1, 0, 4);  // check loop condition
+		qTable.AddQuad(10, 4, 0, 7); // exit loop if condition not met
+		qTable.AddQuad(4, 2, 1, 2);  // Increment sum by i
+		qTable.AddQuad(4, 1, 3, 1);  // Increment i
+		qTable.AddQuad(8, 0, 0, 2);  // Restart loop
+		qTable.AddQuad(6, 2, 0, 0);  // Print final sum
+
+		return sTableSuccess;
+	}
 
 	/**
 	 * Adds QuadTable instruction names and their corresponding codes to the opcode table.
@@ -179,6 +223,6 @@ public class Interpreter {
 		opTable.Add("JINDR", 15);
 	}
 
-	private ReserveTable opTable;
+	private ReserveTable opTable; // TODO: do I have to use this? enumint would be way better
 	private int programCounter;
 }
