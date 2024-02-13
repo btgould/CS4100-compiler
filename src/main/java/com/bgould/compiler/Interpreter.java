@@ -154,16 +154,15 @@ public class Interpreter {
 		sTableSuccess |= (sTable.AddSymbol("$temp", 'V', 0) != -1);
 
 		// Initialize instruction memory for factorial
-		// TODO: enumint these opcodes
-		qTable.AddQuad(5, 3, 0, 2);  // prod = 1
-		qTable.AddQuad(5, 3, 0, 1);  // i = 1
-		qTable.AddQuad(3, 1, 0, 4);  // check loop condition
-		qTable.AddQuad(10, 4, 0, 7); // exit loop if condition not met
-		qTable.AddQuad(2, 2, 1, 2);  // Multiply product by i
-		qTable.AddQuad(4, 1, 3, 1);  // Increment i
-		qTable.AddQuad(8, 0, 0, 2);  // Restart loop
-		qTable.AddQuad(6, 0, 0, 2);  // Print final product
-		qTable.AddQuad(0, 0, 0, 0);  // Stop
+		qTable.AddQuad(opTable.LookupName("MOV"), 3, 0, 2);   // prod = 1
+		qTable.AddQuad(opTable.LookupName("MOV"), 3, 0, 1);   // i = 1
+		qTable.AddQuad(opTable.LookupName("SUB"), 1, 0, 4);   // check loop condition
+		qTable.AddQuad(opTable.LookupName("JP"), 4, 0, 7);    // exit loop if condition not met
+		qTable.AddQuad(opTable.LookupName("MUL"), 2, 1, 2);   // Multiply product by i
+		qTable.AddQuad(opTable.LookupName("ADD"), 1, 3, 1);   // Increment i
+		qTable.AddQuad(opTable.LookupName("JMP"), 0, 0, 2);   // Restart loop
+		qTable.AddQuad(opTable.LookupName("PRINT"), 0, 0, 2); // Print final sum
+		qTable.AddQuad(opTable.LookupName("STOP"), 0, 0, 0);  // Stop
 
 		return sTableSuccess;
 	}
@@ -184,19 +183,19 @@ public class Interpreter {
 		sTableSuccess |= (sTable.AddSymbol("i", 'V', 0) != -1);
 		sTableSuccess |= (sTable.AddSymbol("sum", 'V', 0) != -1);
 		sTableSuccess |= (sTable.AddSymbol("1", 'C', 1) != -1);
+		sTableSuccess |= (sTable.AddSymbol("0", 'C', 0) != -1);
 		sTableSuccess |= (sTable.AddSymbol("$temp", 'V', 0) != -1);
 
 		// Initialize instruction memory for factorial
-		// TODO: enumint these opcodes
-		qTable.AddQuad(5, 3, 0, 2);  // prod = 1
-		qTable.AddQuad(5, 3, 0, 1);  // i = 1
-		qTable.AddQuad(3, 1, 0, 4);  // check loop condition
-		qTable.AddQuad(10, 4, 0, 7); // exit loop if condition not met
-		qTable.AddQuad(4, 2, 1, 2);  // Increment sum by i
-		qTable.AddQuad(4, 1, 3, 1);  // Increment i
-		qTable.AddQuad(8, 0, 0, 2);  // Restart loop
-		qTable.AddQuad(6, 0, 0, 2);  // Print final sum
-		qTable.AddQuad(0, 0, 0, 0);  // Stop
+		qTable.AddQuad(opTable.LookupName("MOV"), 4, 0, 2);   // sum = 0
+		qTable.AddQuad(opTable.LookupName("MOV"), 3, 0, 1);   // i = 1
+		qTable.AddQuad(opTable.LookupName("SUB"), 1, 0, 5);   // check loop condition
+		qTable.AddQuad(opTable.LookupName("JP"), 5, 0, 7);    // exit loop if condition not met
+		qTable.AddQuad(opTable.LookupName("ADD"), 2, 1, 2);   // Increment sum by i
+		qTable.AddQuad(opTable.LookupName("ADD"), 1, 3, 1);   // Increment i
+		qTable.AddQuad(opTable.LookupName("JMP"), 0, 0, 2);   // Restart loop
+		qTable.AddQuad(opTable.LookupName("PRINT"), 0, 0, 2); // Print final sum
+		qTable.AddQuad(opTable.LookupName("STOP"), 0, 0, 0);  // Stop
 
 		return sTableSuccess;
 	}
@@ -249,6 +248,6 @@ public class Interpreter {
 		return result;
 	}
 
-	private ReserveTable opTable; // TODO: do I have to use this? enumint would be way better
+	private ReserveTable opTable;
 	private int programCounter;
 }
