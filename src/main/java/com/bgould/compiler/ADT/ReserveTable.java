@@ -75,6 +75,7 @@ public class ReserveTable {
 		for (int i = 0; i < codes.length; i++) {
 			if (code == codes[i]) {
 				name = names[i];
+				break;
 			}
 		}
 
