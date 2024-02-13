@@ -31,6 +31,27 @@ public class StringUtils {
 	}
 
 	/**
+	 * Appends to the named file with the required error catching
+	 *
+	 * @param filename The file to print to
+	 * @param toWrite The String to append to the file
+	 */
+	public static void AppendToFile(String filename, String toWrite) {
+		try {
+			FileOutputStream outputStream = new FileOutputStream(filename, true);
+			OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream);
+			BufferedWriter bufferedWriter = new BufferedWriter(outputStreamWriter);
+
+			bufferedWriter.write(toWrite);
+			bufferedWriter.newLine();
+
+			bufferedWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
 	 * Appends spaces as necessary to make the given input the desired length. If
 	 * the input is longer than the desired length, no changes are made (i.e. this
 	 * will never truncate a String)

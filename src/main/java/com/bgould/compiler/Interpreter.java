@@ -6,15 +6,14 @@ import com.bgould.compiler.ADT.QuadTable;
 import com.bgould.compiler.ADT.ReserveTable;
 import com.bgould.compiler.ADT.SymbolTable;
 import com.bgould.compiler.utils.Constants;
+import com.bgould.compiler.utils.StringUtils;
 
 /**
  * Class to execute compiled code using the generated QuadTable and SymbolTable
  */
 public class Interpreter {
 
-	public Interpreter() {
-		initializeOpTable();
-	}
+	public Interpreter() { initializeOpTable(); }
 
 	/**
 	 * Executes the program specified by the given QuadTable and SymbolTable
@@ -40,6 +39,13 @@ public class Interpreter {
 			currInstruction = q.GetQuad(programCounter);
 			String instrName = opTable.LookupCode(currInstruction[0]);
 			dstSymUsage = s.GetUsage(currInstruction[3]); // don't change symbol usage by default
+
+			if (traceOn) {
+				String trace =
+					makeTraceString(programCounter, currInstruction[0], currInstruction[1],
+				                    currInstruction[2], currInstruction[3]);
+				StringUtils.AppendToFile(filename, trace);
+			}
 
 			// Increment PC, overwritten if branch chosen
 			programCounter++;
@@ -223,6 +229,26 @@ public class Interpreter {
 		opTable.Add("JNP", 13);
 		opTable.Add("JNN", 14);
 		opTable.Add("JINDR", 15);
+	}
+
+	/**
+	 * Formats the current state of the interpreter as a nice trace string
+	 *
+	 * @param pc Program counter
+	 * @param opcode opCode of the current operation
+	 * @param op1 First arg of the current operation
+	 * @param op2 Second arg of the current operation
+	 * @param op3 Third arg of the current operation
+	 *
+	 * @return Nicely formatted string representing the current operation being interpreted
+	 */
+	private String makeTraceString(int pc, int opcode, int op1, int op2, int op3) {
+		String result = "";
+		result = "PC = " + String.format("%04d", pc) + ": " +
+		         StringUtils.PadToLength(opTable.LookupCode(opcode), 6) +
+		         String.format("%02d", op1) + ", " + String.format("%02d", op2) + ", " +
+		         String.format("%02d", op3);
+		return result;
 	}
 
 	private ReserveTable opTable; // TODO: do I have to use this? enumint would be way better
