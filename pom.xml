@@ -28,8 +28,12 @@
         <configuration>
           <mainClass>com.bgould.compiler.Main</mainClass>
           <arguments>
-            <argument>Quad.txt</argument>
-            <argument>Symbol.txt</argument>
+            <argument>traceFactorial.txt</argument>
+            <argument>SymbolFactorial.txt</argument>
+            <argument>QuadFactorial.txt</argument>
+            <argument>traceSum.txt</argument>
+            <argument>SymbolSum.txt</argument>
+            <argument>QuadSum.txt</argument>
           </arguments>
         </configuration>
       </plugin>
