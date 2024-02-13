@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.bgould.compiler</groupId>
   <artifactId>gould</artifactId>
-  <version>HW2</version>
+  <version>HW3</version>
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
