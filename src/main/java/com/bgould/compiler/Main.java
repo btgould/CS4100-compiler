@@ -13,10 +13,13 @@ public class Main {
 		QuadTable qt;
 
 		// Display interface
+		System.out.println("Brendan Gould CS4100 Homework 3, Spring 2024");
+		System.out.println();
 		System.out.println(
 			"This program expects command-line parameters for filenames in this order:");
 		System.out.println(
 			"traceFactorial SymbolFactorial QuadFactorial traceSum SymbolSum QuadSum");
+		System.out.println();
 
 		// interpretation FACTORIAL
 		st = new SymbolTable(20);               // Create an empty SymbolTable
