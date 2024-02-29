@@ -1,40 +1,30 @@
 package com.bgould.compiler;
 
-import com.bgould.compiler.ADT.QuadTable;
+import com.bgould.compiler.ADT.Lexical;
 import com.bgould.compiler.ADT.SymbolTable;
 
 public class Main {
-
 	public static void main(String[] args) {
-		// Expects 6 command-line parameters for filenames,
-		// see arg[0] through arg[5] below
-		Interpreter interp = new Interpreter();
-		SymbolTable st;
-		QuadTable qt;
+		String inFileAndPath = args[0];
+		String outFileAndPath = args[1];
+		System.out.println("Lexical for " + inFileAndPath);
+		boolean traceOn = true;
 
-		// Display interface
-		System.out.println("Brendan Gould CS4100 Homework 3, Spring 2024");
-		System.out.println();
-		System.out.println(
-			"This program expects command-line parameters for filenames in this order:");
-		System.out.println(
-			"traceFactorial SymbolFactorial QuadFactorial traceSum SymbolSum QuadSum");
-		System.out.println();
+		// Create a symbol table to store appropriate ident, number, string symbols found
+		// NO RESERVE WORDS GO IN THE SYMBOL TABLE!
+		SymbolTable symbolList;
+		symbolList = new SymbolTable(150);
+		Lexical myLexer = new Lexical(inFileAndPath, symbolList, traceOn);
+		Lexical.token currToken;
 
-		// interpretation FACTORIAL
-		st = new SymbolTable(20);               // Create an empty SymbolTable
-		qt = new QuadTable(20);                 // Create an empty QuadTable
-		interp.initializeFactorialTest(st, qt); // Set up for FACTORIAL
-		interp.InterpretQuads(qt, st, true, args[0]);
-		st.PrintSymbolTable(args[1]);
-		qt.PrintQuadTable(args[2]);
+		currToken = myLexer.GetNextToken();
+		while (currToken != null) {
+			System.out.println("\t" + currToken.mnemonic + " | \t" +
+			                   String.format("%04d", currToken.code) + " | \t" + currToken.lexeme);
+			currToken = myLexer.GetNextToken();
+		}
 
-		// interpretation SUMMATION
-		st = new SymbolTable(20);               // Create an empty SymbolTable
-		qt = new QuadTable(20);                 // Create an empty QuadTable
-		interp.initializeSummationTest(st, qt); // Set up for SUMMATION
-		interp.InterpretQuads(qt, st, true, args[3]);
-		st.PrintSymbolTable(args[4]);
-		qt.PrintQuadTable(args[5]);
+		symbolList.PrintSymbolTable(outFileAndPath);
+		System.out.println("Done.");
 	}
 }

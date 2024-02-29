@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.bgould.compiler</groupId>
   <artifactId>gould</artifactId>
-  <version>HW3</version>
+  <version>HW4</version>
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
@@ -28,12 +28,8 @@
         <configuration>
           <mainClass>com.bgould.compiler.Main</mainClass>
           <arguments>
-            <argument>traceFactorial.txt</argument>
-            <argument>SymbolFactorial.txt</argument>
-            <argument>QuadFactorial.txt</argument>
-            <argument>traceSum.txt</argument>
-            <argument>SymbolSum.txt</argument>
-            <argument>QuadSum.txt</argument>
+            <argument>LexicalTestFA23.txt</argument>
+            <argument>SymboltableLexical.txt</argument>
           </arguments>
         </configuration>
       </plugin>
