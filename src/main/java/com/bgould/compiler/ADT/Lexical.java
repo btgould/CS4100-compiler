@@ -17,26 +17,33 @@ public class Lexical {
 	private boolean printToken;      // true to print found tokens here
 	private int lineCount;           // line #in file, for echo- ing
 	private boolean needLine;        // track when to read a new line
-	// Tables to hold the reserve words and the mnemonics for token codes
-	private final int sizeReserveTable = 50;
-	private ReserveTable reserveWords =
-		new ReserveTable(sizeReserveTable); // a few more than # reserves
-	private ReserveTable mnemonics = new ReserveTable(sizeReserveTable);
-	// a few more than # reserves
 
-	// constructor
+	// Tables to hold the reserve words and the mnemonics for token codes
+	private final int sizeReserveTable = 50; // a few more than # reserves
+	private ReserveTable reserveWords = new ReserveTable(sizeReserveTable);
+	private ReserveTable mnemonics = new ReserveTable(sizeReserveTable);
+
+	/**
+	 * Constructs a new lexical analyzer on the given file
+	 *
+	 * @param filename Input file to parse as code
+	 * @param symbols SymbolTable to store found identifiers and constants
+	 * @param echoOn Set to print all input lines to stdout with a line number
+	 */
 	public Lexical(String filename, SymbolTable symbols, boolean echoOn) {
 		saveSymbols = symbols; // map the initialized parameter to the local ST
 		echo = echoOn;         // store echo status
 		lineCount = 0;         // start the line number count
 		line = "";             // line starts empty
 		needLine = true;       // need to read a line
-		printToken = false;    // default OFF, do not print tokesn here within GetNextToken; call
+		printToken = false;    // default OFF, do not print tokens here within GetNextToken; call
 		                       // setPrintToken to change it publicly.
 		linePos = -1;          // no chars read yet
+
 		// call initializations of tables
 		initReserveWords(reserveWords);
 		initMnemonics(mnemonics);
+
 		// set up the file access, get first character, line retrieved 1st time
 		try {
 			file = new File(filename);         // creates a new file instance
@@ -51,11 +58,17 @@ public class Lexical {
 		}
 	}
 
-	// inner class "token" is declared here, no accessors needed
+	/**
+	 * Represents a lexical token
+	 */
 	public class token {
+		// Actual text associated with this token
 		public String lexeme;
+		// Token code for reserve table
 		public int code;
+		// Chosen abbreviation for token
 		public String mnemonic;
+
 		token() {
 			lexeme = "";
 			code = 0;
@@ -87,21 +100,118 @@ public class Lexical {
 	// DEBUG enabler, turns on/OFF token printing inside of GetNextToken
 	public void setPrintToken(boolean on) { printToken = on; }
 
-	/* @@@ */
+	/**
+	 * Initializes the given ReserveTable with a mapping of every reserved token in PL24 to its
+	 * assigned integer code.
+	 *
+	 * @param reserveWords The ReserveTable to store reserved tokens in
+	 */
 	private void initReserveWords(ReserveTable reserveWords) {
-		// Student must provide the rest
+		reserveWords.Add("GOTO", 0);
+		reserveWords.Add("INTEGER", 1);
+		reserveWords.Add("TO", 2);
+		reserveWords.Add("DO", 3);
+		reserveWords.Add("IF", 4);
+		reserveWords.Add("THEN", 5);
+		reserveWords.Add("ELSE", 6);
+		reserveWords.Add("FOR", 7);
+		reserveWords.Add("OF", 8);
+		reserveWords.Add("WRITELN", 9);
+		reserveWords.Add("READLN", 10);
 		reserveWords.Add("BEGIN", 11);
-		// 1 and 2-char
+		reserveWords.Add("END", 12);
+		reserveWords.Add("VAR", 13);
+		reserveWords.Add("WHILE", 14);
+		reserveWords.Add("UNIT", 15);
+		reserveWords.Add("LABEL", 16);
+		reserveWords.Add("REPEAT", 17);
+		reserveWords.Add("UNTIL", 18);
+		reserveWords.Add("PROCEDURE", 19);
+		reserveWords.Add("DOWNTO", 20);
+		reserveWords.Add("FUNCTION", 21);
+		reserveWords.Add("RETURN", 22);
+		reserveWords.Add("REAL", 23);
+		reserveWords.Add("STRING", 24);
+		reserveWords.Add("ARRAY", 25);
+
 		reserveWords.Add("/", 30);
+		reserveWords.Add("*", 31);
+		reserveWords.Add("+", 32);
+		reserveWords.Add("-", 33);
+		reserveWords.Add("(", 34);
+		reserveWords.Add(")", 35);
+		reserveWords.Add(";", 36);
+		reserveWords.Add(":=", 37);
+		reserveWords.Add(">", 38);
+		reserveWords.Add("<", 39);
+		reserveWords.Add(">=", 40);
+		reserveWords.Add("<=", 41);
+		reserveWords.Add("=", 42);
 		reserveWords.Add("<>", 43);
+		reserveWords.Add(",", 44);
+		reserveWords.Add("[", 45);
+		reserveWords.Add("]", 46);
+		reserveWords.Add(":", 47);
+		reserveWords.Add(".", 48);
+
+		reserveWords.Add("NOTFOUND", 99);
 	}
 
-	/* @@@ */
+	/**
+	 * Initializes the given ReserveTable with a mapping of 5-char mnemonic abbreviations for each
+	 * reserved token in PL24 to its assigned integer code.
+	 *
+	 * @param mnemonics The ReserveTable to store mnemonics in
+	 */
 	private void initMnemonics(ReserveTable mnemonics) {
-		// Student must create their own 5-char mnemonics
+		mnemonics.Add("GOTO", 0);
+		mnemonics.Add("INTGR", 1);
+		mnemonics.Add("TO", 2);
+		mnemonics.Add("DO", 3);
+		mnemonics.Add("IF", 4);
+		mnemonics.Add("THEN", 5);
+		mnemonics.Add("ELSE", 6);
+		mnemonics.Add("FOR", 7);
+		mnemonics.Add("OF", 8);
+		mnemonics.Add("WRTLN", 9);
+		mnemonics.Add("RDLN", 10);
+		mnemonics.Add("BEGIN", 11);
+		mnemonics.Add("END", 12);
+		mnemonics.Add("VAR", 13);
+		mnemonics.Add("WHILE", 14);
+		mnemonics.Add("UNIT", 15);
+		mnemonics.Add("LABEL", 16);
+		mnemonics.Add("RPEAT", 17);
+		mnemonics.Add("UNTIL", 18);
+		mnemonics.Add("PRCDR", 19);
+		mnemonics.Add("DWNTO", 20);
+		mnemonics.Add("FNCTN", 21);
+		mnemonics.Add("RETRN", 22);
+		mnemonics.Add("REAL", 23);
+		mnemonics.Add("STRNG", 24);
 		mnemonics.Add("ARRAY", 25);
-		// 1 and 2-char
+
+		mnemonics.Add("DIVID", 30);
+		mnemonics.Add("MLTPY", 31);
+		mnemonics.Add("PLUS", 32);
+		mnemonics.Add("MINUS", 33);
+		mnemonics.Add("LPNTH", 34);
+		mnemonics.Add("RPNTH", 35);
+		mnemonics.Add("SMCLN", 36);
+		mnemonics.Add("DEFNE", 37);
+		mnemonics.Add("GTHAN", 38);
+		mnemonics.Add("LTHAN", 39);
+		mnemonics.Add("GRETO", 40);
+		mnemonics.Add("LSETO", 41);
+		mnemonics.Add("EQUAL", 42);
 		mnemonics.Add("NTEQL", 43);
+		mnemonics.Add("COMMA", 44);
+		mnemonics.Add("LBRKT", 45);
+		mnemonics.Add("RBRKT", 46);
+		mnemonics.Add("COLON", 47);
+		mnemonics.Add("DOT", 48);
+
+		mnemonics.Add("NTFND", 99);
 	}
 
 	// ********************** UTILITY FUNCTIONS
@@ -129,8 +239,7 @@ public class Lexical {
 		char result = ' ';
 		if ((needLine) || (EOF)) {
 			result = ' '; // at end of line, so nothing
-		} else            //
-		{
+		} else {
 			if ((linePos + 1) < line.length()) { // have a char to peek
 				result = line.charAt(linePos + 1);
 			}
@@ -243,7 +352,28 @@ public class Lexical {
 	// global char
 	char currCh;
 
-	private token getIdentifier() { return dummyGet(); }
+	private token getIdentifier() {
+		token result = new token();
+		result.lexeme = "" + currCh; // have the first char
+		currCh = GetNextChar();
+
+		// NOTE: Below is not complete for SP23 identifier definition
+		while (isLetter(currCh) || (isDigit(currCh))) {
+			result.lexeme = result.lexeme + currCh; // extend lexeme
+			currCh = GetNextChar();
+		}
+
+		// end of token, lookup or IDENT
+		result.code = reserveWords.LookupName(result.lexeme);
+		if (result.code == ReserveTable.notFound) {
+			result.code = mnemonics.LookupName("IDENT");
+			// Identifiers need to be added to the symbol table after truncation
+			// as needed
+		}
+
+		result.mnemonic = mnemonics.LookupCode(result.code);
+		return result;
+	}
 
 	private token getNumber() {
 		/* a number is: see token description! */
