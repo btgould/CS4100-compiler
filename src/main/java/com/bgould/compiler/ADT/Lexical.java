@@ -165,7 +165,7 @@ public class Lexical {
 	 */
 	private void initMnemonics(ReserveTable mnemonics) {
 		mnemonics.Add("GOTO", 0);
-		mnemonics.Add("INTGR", 1);
+		mnemonics.Add("INTRW", 1);
 		mnemonics.Add("TO", 2);
 		mnemonics.Add("DO", 3);
 		mnemonics.Add("IF", 4);
@@ -187,8 +187,8 @@ public class Lexical {
 		mnemonics.Add("DWNTO", 20);
 		mnemonics.Add("FNCTN", 21);
 		mnemonics.Add("RETRN", 22);
-		mnemonics.Add("REAL", 23);
-		mnemonics.Add("STRNG", 24);
+		mnemonics.Add("REALR", 23);
+		mnemonics.Add("STRRW", 24);
 		mnemonics.Add("ARRAY", 25);
 
 		mnemonics.Add("DIVID", 30);
@@ -210,6 +210,11 @@ public class Lexical {
 		mnemonics.Add("RBRKT", 46);
 		mnemonics.Add("COLON", 47);
 		mnemonics.Add("DOT", 48);
+
+		mnemonics.Add("IDENT", 50);
+		mnemonics.Add("INTGR", 51);
+		mnemonics.Add("REALN", 52);
+		mnemonics.Add("STRNG", 53);
 
 		mnemonics.Add("NTFND", 99);
 	}
@@ -311,6 +316,12 @@ public class Lexical {
 	final int MAX_TOKEN_LEN = 30;
 	final int MAX_NUM_LEN = 30;
 
+	// useful constant code numbers
+	final int IDENTIFIER_CODE = 50;
+	final int INTEGER_CODE = 51;
+	final int FLOAT_CODE = 52;
+	final int STRING_CODE = 53;
+
 	public char skipComment(char curr) {
 		if (curr == commentStart_1) {
 			curr = GetNextChar();
@@ -363,12 +374,16 @@ public class Lexical {
 	private token getIdentifier() {
 		token result = new token();
 
-		// TODO: do I make this empty if not ident start?
-		result.lexeme = "" + currCh; // have the first char
-		currCh = GetNextChar();
+		if (isLetter(currCh)) {
+			result.lexeme = "" + currCh; // have the first char
+			currCh = GetNextChar();
+		} else {
+			return result;
+		}
 		int len = 1;
 
-		while ((isLetter(currCh) || isDigit(currCh)) && len < MAX_TOKEN_LEN) {
+		while ((isLetter(currCh) || isDigit(currCh) || currCh == '_' || currCh == '$') &&
+		       len < MAX_TOKEN_LEN) {
 			result.lexeme = result.lexeme + currCh; // extend lexeme
 			currCh = GetNextChar();
 			len++;
@@ -382,8 +397,8 @@ public class Lexical {
 
 		// end of token, lookup or IDENT
 		result.code = reserveWords.LookupName(result.lexeme);
-		if (result.code == mnemonics.LookupName("NTFND")) {
-			result.code = mnemonics.LookupName("IDENT");
+		if (result.code == -1) {
+			result.code = IDENTIFIER_CODE;
 
 			// Identifiers need to be added to the symbol table after truncation as needed
 			// Identifiers receive a value of 0 by default
@@ -400,7 +415,7 @@ public class Lexical {
 		// empty token if no number
 		if (isDigit(currCh)) {
 			result.lexeme += currCh;
-			result.code = mnemonics.LookupName("INTGR");
+			result.code = INTEGER_CODE;
 			currCh = GetNextChar();
 		} else {
 			return result;
@@ -418,7 +433,7 @@ public class Lexical {
 		// digits after decimal, before exponential
 		if (currCh == '.' && len < MAX_NUM_LEN) {
 			result.lexeme += currCh;
-			result.code = mnemonics.LookupName("REAL");
+			result.code = FLOAT_CODE;
 			currCh = GetNextChar();
 			len++;
 
@@ -451,10 +466,9 @@ public class Lexical {
 
 		// check for truncation
 		char nextCh = PeekNextChar();
-		boolean nextChOK =
-			(result.code == mnemonics.LookupName("INTGR") && (isDigit(nextCh) || nextCh == '.')) ||
-			(result.code == mnemonics.LookupName("REAL") &&
-		     (isDigit(nextCh) || (!result.lexeme.contains("E") && nextCh == 'E')));
+		boolean nextChOK = (result.code == INTEGER_CODE && (isDigit(nextCh) || nextCh == '.')) ||
+		                   (result.code == FLOAT_CODE &&
+		                    (isDigit(nextCh) || (!result.lexeme.contains("E") && nextCh == 'E')));
 		if (len == MAX_NUM_LEN && nextChOK) {
 			consoleShowWarn("number truncated (" + result.lexeme + ")");
 		}
@@ -482,7 +496,7 @@ public class Lexical {
 		// Check for string start
 		if (isStringStart(currCh)) {
 			result.lexeme += currCh;
-			result.code = mnemonics.LookupName("STRNG");
+			result.code = STRING_CODE;
 			result.mnemonic = mnemonics.LookupCode(result.code);
 
 			currCh = GetNextChar();

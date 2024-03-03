@@ -28,7 +28,7 @@
         <configuration>
           <mainClass>com.bgould.compiler.Main</mainClass>
           <arguments>
-            <argument>LexicalTestFA23.txt</argument>
+            <argument>LexicalTestSP24.txt</argument>
             <argument>SymboltableLexical.txt</argument>
           </arguments>
         </configuration>
