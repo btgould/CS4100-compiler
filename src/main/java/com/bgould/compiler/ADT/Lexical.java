@@ -269,12 +269,14 @@ public class Lexical {
 
 	// Called to get the next character from file, automatically gets a new line when needed. CALL
 	// THIS TO GET CHARACTERS FOR GETIDENT etc.
+	// Does fetch a newline character when line ends
 	public char GetNextChar() {
 		char result;
 		if (needLine) // ran out last time we got a char, so get a new line
 		{
 			GetNextLine();
 		}
+
 		// try to get char from line buff
 		if (EOF) {
 			result = '\n';
@@ -302,6 +304,9 @@ public class Lexical {
 	// is reached before terminating
 	String unterminatedComment = "Comment not terminated before End Of File ";
 
+	// cap length of tokens
+	int maxTokenLen = 30;
+
 	public char skipComment(char curr) {
 		if (curr == commentStart_1) {
 			curr = GetNextChar();
@@ -317,13 +322,12 @@ public class Lexical {
 			if ((curr == commentStart_2) && (PeekNextChar() == commentPairChar)) {
 				curr = GetNextChar(); // get the second
 				curr = GetNextChar(); // into comment or end of comment
-				// while ((curr != commentPairChar) && (PeekNextChar() != commentEnd_2) &&(!EOF)) {
+
 				while ((!((curr == commentPairChar) && (PeekNextChar() == commentEnd_2))) &&
 				       (!EOF)) {
-					// if (lineCount >=4) { System.out.println("In Comment, curr, peek: "+curr+",
-					// "+PeekNextChar());}
 					curr = GetNextChar();
 				}
+
 				if (EOF) {
 					consoleShowError(unterminatedComment);
 				} else {
@@ -356,19 +360,29 @@ public class Lexical {
 		token result = new token();
 		result.lexeme = "" + currCh; // have the first char
 		currCh = GetNextChar();
+		int len = 1;
 
 		// NOTE: Below is not complete for SP23 identifier definition
-		while (isLetter(currCh) || (isDigit(currCh))) {
+		while ((isLetter(currCh) || isDigit(currCh)) && len < maxTokenLen) {
 			result.lexeme = result.lexeme + currCh; // extend lexeme
 			currCh = GetNextChar();
+			len++;
+		}
+
+		// Check for truncation
+		char nextChar = PeekNextChar();
+		if (result.lexeme.length() >= 30 && (isLetter(nextChar) || isDigit(nextChar))) {
+			System.out.println("**** WARNING: identifier truncated (" + result.lexeme + ")");
 		}
 
 		// end of token, lookup or IDENT
 		result.code = reserveWords.LookupName(result.lexeme);
-		if (result.code == ReserveTable.notFound) {
+		if (result.code == mnemonics.LookupName("NTFND")) {
 			result.code = mnemonics.LookupName("IDENT");
-			// Identifiers need to be added to the symbol table after truncation
-			// as needed
+
+			// Identifiers need to be added to the symbol table after truncation as needed
+			// Identifiers receive a value of 0 by default
+			saveSymbols.AddSymbol(result.lexeme, 'I', 0);
 		}
 
 		result.mnemonic = mnemonics.LookupCode(result.code);
