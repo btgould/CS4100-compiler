@@ -305,6 +305,7 @@ public class Lexical {
 	// Skips past single and multi-line comments, and outputs UNTERMINATED COMMENT when end of line
 	// is reached before terminating
 	String unterminatedComment = "Comment not terminated before End Of File ";
+	String unterminatedString = "String not terminated before end of line";
 
 	// cap length of tokens
 	final int MAX_TOKEN_LEN = 30;
@@ -475,7 +476,35 @@ public class Lexical {
 		return result;
 	}
 
-	private token getString() { return dummyGet(); }
+	private token getString() {
+		token result = new token();
+
+		// Check for string start
+		if (isStringStart(currCh)) {
+			result.lexeme += currCh;
+			result.code = mnemonics.LookupName("STRNG");
+			result.mnemonic = mnemonics.LookupCode(result.code);
+
+			currCh = GetNextChar();
+		}
+
+		// All characters inside string
+		while (!isStringStart(currCh) && currCh != '\n') {
+			result.lexeme += currCh;
+			currCh = GetNextChar();
+		}
+
+		// String end, forcing no newline
+		if (isStringStart(currCh)) {
+			result.lexeme += currCh;
+			GetNextChar();
+		} else {
+			consoleShowError(unterminatedString);
+			result.lexeme = "";
+		}
+
+		return result;
+	}
 
 	private token getOtherToken() { return dummyGet(); }
 
@@ -508,6 +537,7 @@ public class Lexical {
 	public token GetNextToken() {
 		token result = new token();
 		currCh = skipWhiteSpace();
+
 		if (isLetter(currCh)) { // is identifier
 			result = getIdentifier();
 		} else if (isDigit(currCh)) { // is numeric
@@ -518,13 +548,13 @@ public class Lexical {
 		{
 			result = getOtherToken();
 		}
+
 		if ((result.lexeme.equals("")) || (EOF)) {
 			result = null;
 		}
-		// set the mnemonic
+
+		// Print result if needed
 		if (result != null) {
-			// THIS LINE REMOVED-- PUT BACK IN TO USE LOOKUP
-			// result.mnemonic = mnemonics.LookupCode(result.code);
 			if (printToken) {
 				System.out.println("\t" + result.mnemonic + " | \t" +
 				                   String.format("%04d", result.code) + " | \t" + result.lexeme);
