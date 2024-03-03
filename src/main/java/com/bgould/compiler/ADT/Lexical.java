@@ -219,6 +219,8 @@ public class Lexical {
 		System.out.println("**** ERROR FOUND: " + message);
 	}
 
+	private void consoleShowWarn(String message) { System.out.println("**** WARNING: " + message); }
+
 	// Character category for alphabetic chars
 	private boolean isLetter(char ch) {
 		return (((ch >= 'A') && (ch <= 'Z')) || ((ch >= 'a') && (ch <= 'z')));
@@ -305,7 +307,8 @@ public class Lexical {
 	String unterminatedComment = "Comment not terminated before End Of File ";
 
 	// cap length of tokens
-	int maxTokenLen = 30;
+	final int MAX_TOKEN_LEN = 30;
+	final int MAX_NUM_LEN = 30;
 
 	public char skipComment(char curr) {
 		if (curr == commentStart_1) {
@@ -358,12 +361,13 @@ public class Lexical {
 
 	private token getIdentifier() {
 		token result = new token();
+
+		// TODO: do I make this empty if not ident start?
 		result.lexeme = "" + currCh; // have the first char
 		currCh = GetNextChar();
 		int len = 1;
 
-		// NOTE: Below is not complete for SP23 identifier definition
-		while ((isLetter(currCh) || isDigit(currCh)) && len < maxTokenLen) {
+		while ((isLetter(currCh) || isDigit(currCh)) && len < MAX_TOKEN_LEN) {
 			result.lexeme = result.lexeme + currCh; // extend lexeme
 			currCh = GetNextChar();
 			len++;
@@ -372,7 +376,7 @@ public class Lexical {
 		// Check for truncation
 		char nextChar = PeekNextChar();
 		if (result.lexeme.length() >= 30 && (isLetter(nextChar) || isDigit(nextChar))) {
-			System.out.println("**** WARNING: identifier truncated (" + result.lexeme + ")");
+			consoleShowWarn("identifier truncated (" + result.lexeme + ")");
 		}
 
 		// end of token, lookup or IDENT
@@ -382,7 +386,7 @@ public class Lexical {
 
 			// Identifiers need to be added to the symbol table after truncation as needed
 			// Identifiers receive a value of 0 by default
-			saveSymbols.AddSymbol(result.lexeme, 'I', 0);
+			saveSymbols.AddSymbol(result.lexeme, 'V', 0);
 		}
 
 		result.mnemonic = mnemonics.LookupCode(result.code);
@@ -390,8 +394,85 @@ public class Lexical {
 	}
 
 	private token getNumber() {
-		/* a number is: see token description! */
-		return dummyGet();
+		token result = new token();
+
+		// empty token if no number
+		if (isDigit(currCh)) {
+			result.lexeme += currCh;
+			result.code = mnemonics.LookupName("INTGR");
+			currCh = GetNextChar();
+		} else {
+			return result;
+		}
+
+		int len = 1;
+
+		// digits before decimal
+		while (isDigit(currCh) && len < MAX_NUM_LEN) {
+			result.lexeme += currCh;
+			currCh = GetNextChar();
+			len++;
+		}
+
+		// digits after decimal, before exponential
+		if (currCh == '.' && len < MAX_NUM_LEN) {
+			result.lexeme += currCh;
+			result.code = mnemonics.LookupName("REAL");
+			currCh = GetNextChar();
+			len++;
+
+			while (isDigit(currCh) && len < MAX_NUM_LEN) {
+				result.lexeme += currCh;
+				currCh = GetNextChar();
+				len++;
+			}
+
+			// digits after exponential
+			char nextCh = PeekNextChar();
+			if (currCh == 'E' && (nextCh == '+' || nextCh == '-' || isDigit(nextCh)) &&
+			    len < MAX_NUM_LEN - 1) {
+				// Add exponential and next char
+				result.lexeme += currCh;
+				currCh = GetNextChar();
+				len++;
+				result.lexeme += currCh;
+				currCh = GetNextChar();
+				len++;
+
+				// Add all remaining digits
+				while (isDigit(currCh) && len < MAX_NUM_LEN) {
+					result.lexeme += currCh;
+					currCh = GetNextChar();
+					len++;
+				}
+			}
+		}
+
+		// check for truncation
+		char nextCh = PeekNextChar();
+		boolean nextChOK =
+			(result.code == mnemonics.LookupName("INTGR") && (isDigit(nextCh) || nextCh == '.')) ||
+			(result.code == mnemonics.LookupName("REAL") &&
+		     (isDigit(nextCh) || (!result.lexeme.contains("E") && nextCh == 'E')));
+		if (len == MAX_NUM_LEN && nextChOK) {
+			consoleShowWarn("number truncated (" + result.lexeme + ")");
+		}
+
+		// add constant number to symbol table
+		if (integerOK(result.lexeme)) {
+			saveSymbols.AddSymbol(result.lexeme, 'C', Integer.parseInt(result.lexeme));
+		} else if (doubleOK(result.lexeme)) {
+			saveSymbols.AddSymbol(result.lexeme, 'C', Double.parseDouble(result.lexeme));
+		} else {
+			// numbers of the form "123.456E-" followed by any non-digit will not be a valid integer
+			// or double. However, since you have to check the 'E', '-', AND the character
+			// afterwards, it is impossible to detect these errors with just 1 character lookahead.
+			throw new IllegalStateException(
+				"Poorly formatted number that cannot be detected by 1-char lookahead");
+		}
+
+		result.mnemonic = mnemonics.LookupCode(result.code);
+		return result;
 	}
 
 	private token getString() { return dummyGet(); }
