@@ -374,6 +374,7 @@ public class Lexical {
 
 	private token getIdentifier() {
 		token result = new token();
+		boolean seenTruncationWarning = false;
 
 		if (isLetter(currCh)) {
 			result.lexeme = "" + currCh; // have the first char
@@ -383,17 +384,17 @@ public class Lexical {
 		}
 		int len = 1;
 
-		while ((isLetter(currCh) || isDigit(currCh) || currCh == '_' || currCh == '$') &&
-		       len < MAX_TOKEN_LEN) {
-			result.lexeme = result.lexeme + currCh; // extend lexeme
+		while (isLetter(currCh) || isDigit(currCh) || currCh == '_' || currCh == '$') {
+			// Add character if under max len
+			if (len < MAX_TOKEN_LEN) {
+				result.lexeme = result.lexeme + currCh; // extend lexeme
+			} else if (!seenTruncationWarning) {
+				consoleShowWarn("identifier truncated (" + result.lexeme + ")");
+				seenTruncationWarning = true;
+			}
+
 			currCh = GetNextChar();
 			len++;
-		}
-
-		// Check for truncation
-		char nextChar = PeekNextChar();
-		if (result.lexeme.length() >= MAX_TOKEN_LEN && (isLetter(nextChar) || isDigit(nextChar))) {
-			consoleShowWarn("identifier truncated (" + result.lexeme + ")");
 		}
 
 		// end of token, lookup or IDENT
@@ -412,6 +413,7 @@ public class Lexical {
 
 	private token getNumber() {
 		token result = new token();
+		boolean seenTruncationWarning = false;
 
 		// empty token if no number
 		if (isDigit(currCh)) {
@@ -425,52 +427,65 @@ public class Lexical {
 		int len = 1;
 
 		// digits before decimal
-		while (isDigit(currCh) && len < MAX_INTEGER_LEN) {
-			result.lexeme += currCh;
+		while (isDigit(currCh)) {
+			if (len < MAX_INTEGER_LEN) {
+				result.lexeme += currCh;
+			} else if (!seenTruncationWarning) {
+				consoleShowWarn("number truncated (" + result.lexeme + ")");
+				seenTruncationWarning = true;
+			}
+
 			currCh = GetNextChar();
 			len++;
 		}
 
 		// digits after decimal, before exponential
-		if (currCh == '.' && len < MAX_FLOAT_LEN) {
+		// only continue if we haven't already maxed out int places
+		if (currCh == '.' && !seenTruncationWarning) {
 			result.lexeme += currCh;
 			result.code = FLOAT_CODE;
 			currCh = GetNextChar();
 			len++;
 
-			while (isDigit(currCh) && len < MAX_FLOAT_LEN) {
-				result.lexeme += currCh;
+			while (isDigit(currCh)) {
+				if (len < MAX_FLOAT_LEN) {
+					result.lexeme += currCh;
+				} else if (!seenTruncationWarning) {
+					consoleShowWarn("number truncated (" + result.lexeme + ")");
+					seenTruncationWarning = true;
+				}
+
 				currCh = GetNextChar();
 				len++;
 			}
 
 			// digits after exponential
 			if (currCh == 'E' && isDigit(PeekNextChar()) && len < MAX_FLOAT_LEN - 1) {
-				// Add exponential and first digit
-				result.lexeme += currCh;
-				currCh = GetNextChar();
-				len++;
-				result.lexeme += currCh;
-				currCh = GetNextChar();
-				len++;
-
-				// Add all remaining digits
-				while (isDigit(currCh) && len < MAX_FLOAT_LEN) {
+				if (len < MAX_FLOAT_LEN - 1) {
+					// Add exponential and first digit
 					result.lexeme += currCh;
 					currCh = GetNextChar();
 					len++;
+					result.lexeme += currCh;
+					currCh = GetNextChar();
+					len++;
+
+					// Add all remaining digits
+					while (isDigit(currCh)) {
+						if (len < MAX_FLOAT_LEN) {
+							result.lexeme += currCh;
+						} else if (!seenTruncationWarning) {
+							consoleShowWarn("number truncated (" + result.lexeme + ")");
+							seenTruncationWarning = true;
+						}
+
+						currCh = GetNextChar();
+						len++;
+					}
+				} else {
+					consoleShowWarn("number truncated (" + result.lexeme + ")");
 				}
 			}
-		}
-
-		// check for truncation
-		char nextCh = PeekNextChar();
-		boolean nextChIntOK = (result.code == INTEGER_CODE && (isDigit(nextCh) || nextCh == '.'));
-		boolean nextChFloatOK =
-			(result.code == FLOAT_CODE &&
-		     (isDigit(nextCh) || (!result.lexeme.contains("E") && nextCh == 'E')));
-		if ((len == MAX_INTEGER_LEN && nextChIntOK) || (len == MAX_FLOAT_LEN && nextChFloatOK)) {
-			consoleShowWarn("number truncated (" + result.lexeme + ")");
 		}
 
 		// add constant number to symbol table
@@ -511,7 +526,9 @@ public class Lexical {
 		// String end, forcing no newline
 		result.lexeme += currCh;
 
-		if (!isStringStart(currCh)) {
+		if (isStringStart(currCh)) {
+			saveSymbols.AddSymbol(result.lexeme, 'C', result.lexeme);
+		} else {
 			consoleShowError(unterminatedString);
 			result.code = mnemonics.LookupName("UKWN");
 			result.mnemonic = mnemonics.LookupCode(result.code);
