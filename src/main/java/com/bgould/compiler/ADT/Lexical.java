@@ -165,58 +165,58 @@ public class Lexical {
 	 */
 	private void initMnemonics(ReserveTable mnemonics) {
 		mnemonics.Add("GOTO", 0);
-		mnemonics.Add("INTRW", 1);
-		mnemonics.Add("TO", 2);
-		mnemonics.Add("DO", 3);
-		mnemonics.Add("IF", 4);
+		mnemonics.Add("INTR", 1);
+		mnemonics.Add("TO__", 2);
+		mnemonics.Add("DO__", 3);
+		mnemonics.Add("IF__", 4);
 		mnemonics.Add("THEN", 5);
 		mnemonics.Add("ELSE", 6);
-		mnemonics.Add("FOR", 7);
-		mnemonics.Add("OF", 8);
-		mnemonics.Add("WRTLN", 9);
+		mnemonics.Add("FOR_", 7);
+		mnemonics.Add("OF__", 8);
+		mnemonics.Add("WTLN", 9);
 		mnemonics.Add("RDLN", 10);
-		mnemonics.Add("BEGIN", 11);
-		mnemonics.Add("END", 12);
-		mnemonics.Add("VAR", 13);
-		mnemonics.Add("WHILE", 14);
+		mnemonics.Add("BGIN", 11);
+		mnemonics.Add("END_", 12);
+		mnemonics.Add("VAR_", 13);
+		mnemonics.Add("WHIL", 14);
 		mnemonics.Add("UNIT", 15);
-		mnemonics.Add("LABEL", 16);
-		mnemonics.Add("RPEAT", 17);
-		mnemonics.Add("UNTIL", 18);
-		mnemonics.Add("PRCDR", 19);
-		mnemonics.Add("DWNTO", 20);
-		mnemonics.Add("FNCTN", 21);
-		mnemonics.Add("RETRN", 22);
-		mnemonics.Add("REALR", 23);
-		mnemonics.Add("STRRW", 24);
-		mnemonics.Add("ARRAY", 25);
+		mnemonics.Add("LABL", 16);
+		mnemonics.Add("REPT", 17);
+		mnemonics.Add("UNTL", 18);
+		mnemonics.Add("PCDR", 19);
+		mnemonics.Add("DNTO", 20);
+		mnemonics.Add("FNCN", 21);
+		mnemonics.Add("RTRN", 22);
+		mnemonics.Add("DFPR", 23);
+		mnemonics.Add("STRR", 24);
+		mnemonics.Add("ARAY", 25);
 
-		mnemonics.Add("DIVID", 30);
-		mnemonics.Add("MLTPY", 31);
+		mnemonics.Add("DVDE", 30);
+		mnemonics.Add("MTPY", 31);
 		mnemonics.Add("PLUS", 32);
-		mnemonics.Add("MINUS", 33);
-		mnemonics.Add("LPNTH", 34);
-		mnemonics.Add("RPNTH", 35);
-		mnemonics.Add("SMCLN", 36);
-		mnemonics.Add("DEFNE", 37);
-		mnemonics.Add("GTHAN", 38);
-		mnemonics.Add("LTHAN", 39);
-		mnemonics.Add("GRETO", 40);
-		mnemonics.Add("LSETO", 41);
-		mnemonics.Add("EQUAL", 42);
-		mnemonics.Add("NTEQL", 43);
-		mnemonics.Add("COMMA", 44);
-		mnemonics.Add("LBRKT", 45);
-		mnemonics.Add("RBRKT", 46);
-		mnemonics.Add("COLON", 47);
-		mnemonics.Add("DOT", 48);
+		mnemonics.Add("MNUS", 33);
+		mnemonics.Add("LFTP", 34);
+		mnemonics.Add("RITP", 35);
+		mnemonics.Add("SCLN", 36);
+		mnemonics.Add("DEFN", 37);
+		mnemonics.Add("GTHN", 38);
+		mnemonics.Add("LTHN", 39);
+		mnemonics.Add("GRET", 40);
+		mnemonics.Add("LSET", 41);
+		mnemonics.Add("EQUL", 42);
+		mnemonics.Add("NEQL", 43);
+		mnemonics.Add("COMA", 44);
+		mnemonics.Add("LBKT", 45);
+		mnemonics.Add("RBKT", 46);
+		mnemonics.Add("COLN", 47);
+		mnemonics.Add("DOT_", 48);
 
-		mnemonics.Add("IDENT", 50);
-		mnemonics.Add("INTGR", 51);
-		mnemonics.Add("REALN", 52);
-		mnemonics.Add("STRNG", 53);
+		mnemonics.Add("IDNT", 50);
+		mnemonics.Add("INTV", 51);
+		mnemonics.Add("DFPV", 52);
+		mnemonics.Add("STRV", 53);
 
-		mnemonics.Add("NTFND", 99);
+		mnemonics.Add("UKWN", 99);
 	}
 
 	// ********************** UTILITY FUNCTIONS
@@ -313,8 +313,9 @@ public class Lexical {
 	String unterminatedString = "String not terminated before end of line";
 
 	// cap length of tokens
-	final int MAX_TOKEN_LEN = 30;
-	final int MAX_NUM_LEN = 30;
+	final int MAX_TOKEN_LEN = 20;
+	final int MAX_INTEGER_LEN = 6;
+	final int MAX_FLOAT_LEN = 12;
 
 	// useful constant code numbers
 	final int IDENTIFIER_CODE = 50;
@@ -367,7 +368,7 @@ public class Lexical {
 	}
 
 	private boolean isPrefix(char ch) { return ((ch == ':') || (ch == '<') || (ch == '>')); }
-	private boolean isStringStart(char ch) { return ch == '"'; }
+	private boolean isStringStart(char ch) { return ch == '\''; }
 	// global char
 	char currCh;
 
@@ -391,7 +392,7 @@ public class Lexical {
 
 		// Check for truncation
 		char nextChar = PeekNextChar();
-		if (result.lexeme.length() >= 30 && (isLetter(nextChar) || isDigit(nextChar))) {
+		if (result.lexeme.length() >= MAX_TOKEN_LEN && (isLetter(nextChar) || isDigit(nextChar))) {
 			consoleShowWarn("identifier truncated (" + result.lexeme + ")");
 		}
 
@@ -424,20 +425,20 @@ public class Lexical {
 		int len = 1;
 
 		// digits before decimal
-		while (isDigit(currCh) && len < MAX_NUM_LEN) {
+		while (isDigit(currCh) && len < MAX_INTEGER_LEN) {
 			result.lexeme += currCh;
 			currCh = GetNextChar();
 			len++;
 		}
 
 		// digits after decimal, before exponential
-		if (currCh == '.' && len < MAX_NUM_LEN) {
+		if (currCh == '.' && len < MAX_FLOAT_LEN) {
 			result.lexeme += currCh;
 			result.code = FLOAT_CODE;
 			currCh = GetNextChar();
 			len++;
 
-			while (isDigit(currCh) && len < MAX_NUM_LEN) {
+			while (isDigit(currCh) && len < MAX_FLOAT_LEN) {
 				result.lexeme += currCh;
 				currCh = GetNextChar();
 				len++;
@@ -446,7 +447,7 @@ public class Lexical {
 			// digits after exponential
 			char nextCh = PeekNextChar();
 			if (currCh == 'E' && (nextCh == '+' || nextCh == '-' || isDigit(nextCh)) &&
-			    len < MAX_NUM_LEN - 1) {
+			    len < MAX_FLOAT_LEN - 1) {
 				// Add exponential and next char
 				result.lexeme += currCh;
 				currCh = GetNextChar();
@@ -456,7 +457,7 @@ public class Lexical {
 				len++;
 
 				// Add all remaining digits
-				while (isDigit(currCh) && len < MAX_NUM_LEN) {
+				while (isDigit(currCh) && len < MAX_FLOAT_LEN) {
 					result.lexeme += currCh;
 					currCh = GetNextChar();
 					len++;
@@ -466,10 +467,11 @@ public class Lexical {
 
 		// check for truncation
 		char nextCh = PeekNextChar();
-		boolean nextChOK = (result.code == INTEGER_CODE && (isDigit(nextCh) || nextCh == '.')) ||
-		                   (result.code == FLOAT_CODE &&
-		                    (isDigit(nextCh) || (!result.lexeme.contains("E") && nextCh == 'E')));
-		if (len == MAX_NUM_LEN && nextChOK) {
+		boolean nextChIntOK = (result.code == INTEGER_CODE && (isDigit(nextCh) || nextCh == '.'));
+		boolean nextChFloatOK =
+			(result.code == FLOAT_CODE &&
+		     (isDigit(nextCh) || (!result.lexeme.contains("E") && nextCh == 'E')));
+		if ((len == MAX_INTEGER_LEN && nextChIntOK) || (len == MAX_FLOAT_LEN && nextChFloatOK)) {
 			consoleShowWarn("number truncated (" + result.lexeme + ")");
 		}
 
@@ -503,24 +505,47 @@ public class Lexical {
 		}
 
 		// All characters inside string
-		while (!isStringStart(currCh) && currCh != '\n') {
+		while (!(isStringStart(currCh) || currCh == '\n')) {
 			result.lexeme += currCh;
 			currCh = GetNextChar();
 		}
 
 		// String end, forcing no newline
-		if (isStringStart(currCh)) {
-			result.lexeme += currCh;
-			GetNextChar();
-		} else {
+		result.lexeme += currCh;
+
+		if (!isStringStart(currCh)) {
 			consoleShowError(unterminatedString);
-			result.lexeme = "";
+			result.code = mnemonics.LookupName("UKWN");
+			result.mnemonic = mnemonics.LookupCode(result.code);
 		}
+
+		currCh = GetNextChar();
 
 		return result;
 	}
 
-	private token getOtherToken() { return dummyGet(); }
+	private token getOtherToken() {
+		token result = new token();
+		result.lexeme += currCh;
+		currCh = GetNextChar();
+
+		// check for two char reserve tokens
+		if (isPrefix(result.lexeme.charAt(0))) {
+			if (reserveWords.LookupName(result.lexeme + currCh) != -1) {
+				result.lexeme += currCh;
+				currCh = GetNextChar();
+			}
+		}
+
+		// set token code
+		result.code = reserveWords.LookupName(result.lexeme);
+		if (result.code == -1) {
+			result.code = mnemonics.LookupName("UKWN");
+		}
+		result.mnemonic = mnemonics.LookupCode(result.code);
+
+		return result;
+	}
 
 	// Checks to see if a string contains a valid DOUBLE
 	public boolean doubleOK(String stin) {
@@ -574,6 +599,7 @@ public class Lexical {
 				                   String.format("%04d", result.code) + " | \t" + result.lexeme);
 			}
 		}
+
 		return result;
 	}
 }
