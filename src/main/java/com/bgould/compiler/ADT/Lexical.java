@@ -445,10 +445,8 @@ public class Lexical {
 			}
 
 			// digits after exponential
-			char nextCh = PeekNextChar();
-			if (currCh == 'E' && (nextCh == '+' || nextCh == '-' || isDigit(nextCh)) &&
-			    len < MAX_FLOAT_LEN - 1) {
-				// Add exponential and next char
+			if (currCh == 'E' && isDigit(PeekNextChar()) && len < MAX_FLOAT_LEN - 1) {
+				// Add exponential and first digit
 				result.lexeme += currCh;
 				currCh = GetNextChar();
 				len++;
