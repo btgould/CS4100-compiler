@@ -76,17 +76,6 @@ public class Lexical {
 		}
 	}
 
-	// This is the DISCARDABLE dummy method for getting and returning single characters STUDENT
-	// TURN-IN SHOULD NOT USE THIS!
-	private token dummyGet() {
-		token result = new token();
-		result.lexeme = "" + currCh; // have the first char
-		currCh = GetNextChar();
-		result.code = 0;
-		result.mnemonic = "DUMY";
-		return result;
-	}
-
 	// ******************* PUBLIC USEFUL METHODS These are nice for syntax to call later
 	// given a mnemonic, find its token code value
 	public int codeFor(String mnemonic) { return mnemonics.LookupName(mnemonic); }
