@@ -62,24 +62,25 @@ public class Syntactic {
 		if (token.code == lex.codeFor("UNIT")) {
 			token = lex.GetNextToken();
 			recur = ProgIdentifier();
-			if (token.code == lex.codeFor("SEMI")) {
+			if (token.code == lex.codeFor("SCLN")) {
 				token = lex.GetNextToken();
 				recur = Block();
-				if (token.code == lex.codeFor("PERD")) {
+				if (token.code == lex.codeFor("DOT_")) {
 					if (!anyErrors) {
 						System.out.println("Success.");
 					} else {
 						System.out.println("Compilation failed.");
 					}
 				} else {
-					error(lex.reserveFor("PERD"), token.lexeme);
+					error(lex.reserveFor("DOT_"), token.lexeme);
 				}
 			} else {
-				error(lex.reserveFor("SEMI"), token.lexeme);
+				error(lex.reserveFor("SCLN"), token.lexeme);
 			}
 		} else {
 			error(lex.reserveFor("UNIT"), token.lexeme);
 		}
+
 		trace("Program", false);
 		return recur;
 	}
@@ -91,10 +92,11 @@ public class Syntactic {
 			return -1;
 		}
 		trace("Block", true);
+
 		if (token.code == lex.codeFor("BGIN")) {
 			token = lex.GetNextToken();
 			recur = Statement();
-			while ((token.code == lex.codeFor("SEMI")) && (!lex.EOF()) && (!anyErrors)) {
+			while ((token.code == lex.codeFor("SCLN")) && (!lex.EOF()) && (!anyErrors)) {
 				token = lex.GetNextToken();
 				recur = Statement();
 			}
@@ -106,6 +108,7 @@ public class Syntactic {
 		} else {
 			error(lex.reserveFor("BGIN"), token.lexeme);
 		}
+
 		trace("Block", false);
 		return recur;
 	}
@@ -118,14 +121,16 @@ public class Syntactic {
 			return -1;
 		}
 		trace("handleAssignment", true);
+
 		// have ident already in order to get to here, handle as Variable
 		recur = Variable(); // Variable moves ahead, next token ready
-		if (token.code == lex.codeFor("ASGN")) {
+		if (token.code == lex.codeFor("EQUL")) {
 			token = lex.GetNextToken();
 			recur = SimpleExpression();
 		} else {
-			error(lex.reserveFor("ASGN"), token.lexeme);
+			error(lex.reserveFor("EQUL"), token.lexeme);
 		}
+
 		trace("handleAssignment", false);
 		return recur;
 	}
@@ -142,9 +147,11 @@ public class Syntactic {
 			return -1;
 		}
 		trace("SimpleExpression", true);
+
 		if (token.code == lex.codeFor("IDNT")) {
 			token = lex.GetNextToken();
 		}
+
 		trace("SimpleExpression", false);
 		return recur;
 	}
@@ -157,10 +164,11 @@ public class Syntactic {
 			return -1;
 		}
 		trace("Statement", true);
+
 		if (token.code == lex.codeFor("IDNT")) { // must be an ASSIGNMENT
 			recur = handleAssignment();
 		} else {
-			if (token.code == lex.codeFor("_IF_")) { // must be an IF
+			if (token.code == lex.codeFor("IF__")) { // must be an IF
 				// this would handle the rest of the IF statment IN PART B
 			} else
 			// if/elses should look for the other possible statement starts...
@@ -169,6 +177,7 @@ public class Syntactic {
 				error("Statement start", token.lexeme);
 			}
 		}
+
 		trace("Statement", false);
 		return recur;
 	}
@@ -181,21 +190,28 @@ public class Syntactic {
 			return -1;
 		}
 		trace("Variable", true);
+
 		if ((token.code == lex.codeFor("IDNT"))) {
 			// bookkeeping and move on
 			token = lex.GetNextToken();
-		} else
+		} else {
 			error("Variable", token.lexeme);
+		}
+
 		trace("Variable", false);
 		return recur;
 	}
 
 	/**
 	 * *************************************************
+	 * UTILITY FUNCTIONS USED THROUGHOUT THIS CLASS
 	 */
-	/* UTILITY FUNCTIONS USED THROUGHOUT THIS CLASS */
-	// error provides a simple way to print an error statement to standard output
-	// and avoid reduncancy
+	/**
+	 * Writes a simple error message to stdout. Currently, the only type of error message supported by this function is when one type of expression is expected, but a different type is found. 
+	 *
+	 * @param wanted The type of expression that was expected
+	 * @param got The type of expression that was found instead
+	 */
 	private void error(String wanted, String got) {
 		anyErrors = true;
 		System.out.println("ERROR: Expected " + wanted + " but found " + got);
