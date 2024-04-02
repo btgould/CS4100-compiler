@@ -1,30 +1,17 @@
 package com.bgould.compiler;
 
-import com.bgould.compiler.ADT.Lexical;
-import com.bgould.compiler.ADT.SymbolTable;
+import com.bgould.compiler.ADT.Syntactic;
 
 public class Main {
 	public static void main(String[] args) {
-		String inFileAndPath = args[0];
-		String outFileAndPath = args[1];
-		System.out.println("Lexical for " + inFileAndPath);
-		boolean traceOn = true;
+		String filePath = args[0];
+		boolean traceon = true;
+		System.out.println("Brendan Gould, 4267, CS4100, SPRING 2024");
+		System.out.println("INPUT FILE TO PROCESS IS: " + filePath);
 
-		// Create a symbol table to store appropriate ident, number, string symbols found
-		// NO RESERVE WORDS GO IN THE SYMBOL TABLE!
-		SymbolTable symbolList;
-		symbolList = new SymbolTable(150);
-		Lexical myLexer = new Lexical(inFileAndPath, symbolList, traceOn);
-		Lexical.token currToken;
+		Syntactic parser = new Syntactic(filePath, traceon);
+		parser.parse();
 
-		currToken = myLexer.GetNextToken();
-		while (currToken != null) {
-			System.out.println("\t" + currToken.mnemonic + " | \t" +
-			                   String.format("%04d", currToken.code) + " | \t" + currToken.lexeme);
-			currToken = myLexer.GetNextToken();
-		}
-
-		symbolList.PrintSymbolTable(outFileAndPath);
 		System.out.println("Done.");
 	}
 }
