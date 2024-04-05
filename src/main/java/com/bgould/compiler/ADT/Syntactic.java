@@ -1,5 +1,7 @@
 package com.bgould.compiler.ADT;
 
+import com.bgould.compiler.ADT.Lexical.token;
+
 /**
  * Class performing CFG based syntactic parsing of source code
  *
@@ -124,11 +126,11 @@ public class Syntactic {
 
 		// have ident already in order to get to here, handle as Variable
 		recur = Variable(); // Variable moves ahead, next token ready
-		if (token.code == lex.codeFor("EQUL")) {
+		if (token.code == lex.codeFor("DEFN")) {
 			token = lex.GetNextToken();
 			recur = SimpleExpression();
 		} else {
-			error(lex.reserveFor("EQUL"), token.lexeme);
+			error(lex.reserveFor("DEFN"), token.lexeme);
 		}
 
 		trace("handleAssignment", false);
@@ -148,11 +150,146 @@ public class Syntactic {
 		}
 		trace("SimpleExpression", true);
 
-		if (token.code == lex.codeFor("IDNT")) {
-			token = lex.GetNextToken();
+		// optional sign value
+		if (isAddOpp(token)) {
+			recur = Sign();
+		}
+
+		// mandatory term
+		recur = Term();
+
+		// optional additional terms
+		while (isAddOpp(token)) {
+			recur = AddOp();
+			recur = Term();
 		}
 
 		trace("SimpleExpression", false);
+		return recur;
+	}
+
+	private int Term() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("Term", true);
+
+		// Mandatory first factor
+		recur = Factor();
+
+		// Optional additional factors
+		while (isMulOpp(token)) {
+			recur = MulOp();
+			recur = Factor();
+		}
+
+		trace("Term", false);
+		return recur;
+	}
+
+	private int Factor() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("Factor", true);
+
+		if (isNumber(token)) { // some constant
+			recur = UnsignedConstant();
+		} else if (token.code == lex.codeFor("IDNT")) { // some variable
+			recur = Variable();
+		} else if (token.code == lex.codeFor("LFTP")) { // nested expression
+			token = lex.GetNextToken();
+
+			recur = SimpleExpression();
+
+			if (token.code != lex.codeFor("RITP")) {
+				error(")", token.lexeme);
+			}
+			token = lex.GetNextToken();
+		} else {
+			error("Constant, Variable, or SimpleExpression", token.lexeme);
+		}
+
+		trace("Factor", false);
+		return recur;
+	}
+
+	private int UnsignedConstant() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("UnsignedConstant", true);
+
+		recur = UnsignedNumber();
+
+		trace("UnsignedConstant", false);
+		return recur;
+	}
+
+	private int UnsignedNumber() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("UnsignedNumber", true);
+
+		if (!isNumber(token)) {
+			error("Float or Integer", token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		trace("UnsignedNumber", false);
+		return recur;
+	}
+
+	private int AddOp() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("AddOp", true);
+
+		if (!isAddOpp(token)) {
+			error("+ or -", token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		trace("AddOp", false);
+		return recur;
+	}
+
+	private int Sign() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("Sign", true);
+
+		if (!isAddOpp(token)) {
+			error("+ or -", token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		trace("Sign", false);
+		return recur;
+	}
+
+	private int MulOp() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("MulOp", true);
+
+		if (!isMulOpp(token)) {
+			error("* or /", token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		trace("MulOp", false);
 		return recur;
 	}
 
@@ -207,7 +344,8 @@ public class Syntactic {
 	 * UTILITY FUNCTIONS USED THROUGHOUT THIS CLASS
 	 */
 	/**
-	 * Writes a simple error message to stdout. Currently, the only type of error message supported by this function is when one type of expression is expected, but a different type is found. 
+	 * Writes a simple error message to stdout. Currently, the only type of error message supported
+	 * by this function is when one type of expression is expected, but a different type is found.
 	 *
 	 * @param wanted The type of expression that was expected
 	 * @param got The type of expression that was found instead
@@ -254,6 +392,18 @@ public class Syntactic {
 			result = result + s;
 		}
 		return result;
+	}
+
+	private boolean isAddOpp(Lexical.token t) {
+		return t.code == lex.codeFor("PLUS") || t.code == lex.codeFor("MNUS");
+	}
+
+	private boolean isMulOpp(Lexical.token t) {
+		return t.code == lex.codeFor("DVDE") || t.code == lex.codeFor("MTPY");
+	}
+
+	private boolean isNumber(Lexical.token t) {
+		return t.code == lex.codeFor("INTV") || t.code == lex.codeFor("DFPV");
 	}
 
 	/* Template for all the non-terminal method bodies
