@@ -157,7 +157,7 @@ public class Syntactic {
 		recur = Term();
 
 		// optional additional terms
-		while (isAddOpp(token)) {
+		while ((!anyErrors) && isAddOpp(token)) {
 			recur = AddOp();
 			recur = Term();
 		}
@@ -183,7 +183,7 @@ public class Syntactic {
 		recur = Factor();
 
 		// Optional additional factors
-		while (isMulOpp(token)) {
+		while ((!anyErrors) && isMulOpp(token)) {
 			recur = MulOp();
 			recur = Factor();
 		}
@@ -214,12 +214,13 @@ public class Syntactic {
 
 			recur = SimpleExpression();
 
-			if (token.code != lex.codeFor("RITP")) {
-				error(")", token.lexeme);
+			if (token.code == lex.codeFor("RITP")) {
+				token = lex.GetNextToken();
+			} else {
+				error("')'", token.lexeme);
 			}
-			token = lex.GetNextToken();
 		} else {
-			error("Constant, Variable, or SimpleExpression", token.lexeme);
+			error("Constant, Variable, or '('", token.lexeme);
 		}
 
 		trace("Factor", false);
