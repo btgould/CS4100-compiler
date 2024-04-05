@@ -1,7 +1,5 @@
 package com.bgould.compiler.ADT;
 
-import com.bgould.compiler.ADT.Lexical.token;
-
 /**
  * Class performing CFG based syntactic parsing of source code
  *
@@ -137,12 +135,12 @@ public class Syntactic {
 		return recur;
 	}
 
-	// NonTerminal This is dummied in to only work for an identifier.
-	// It will work with the SyntaxAMiniTest file having ASSIGNMENT statements
-	// containing only IDENTIFIERS. TERM and FACTOR and numbers will be
-	// needed to complete Part A.
-	// SimpleExpression MUST BE
-	// COMPLETED TO IMPLEMENT CFG for <simple expression>
+	/**
+	 * Syntactically parses a simple arithmetic expression.
+	 * Production rule: [<sign>] <term> {<addop> <term>}*
+	 *
+	 * @return Unused for now
+	 */
 	private int SimpleExpression() {
 		int recur = 0;
 		if (anyErrors) {
@@ -168,6 +166,12 @@ public class Syntactic {
 		return recur;
 	}
 
+	/**
+	 * Syntactically parses a term in an arithmetic expression
+	 * Production rule: <factor> {<mulop> <factor> }*
+	 *
+	 * @return Unused for now
+	 */
 	private int Term() {
 		int recur = 0;
 		if (anyErrors) {
@@ -188,6 +192,12 @@ public class Syntactic {
 		return recur;
 	}
 
+	/**
+	 * Syntactically parses a factor in an arithmetic expression
+	 * Production rule: <unsigned constant> | <variable> | $LPAR <simple expression> $RPAR
+	 *
+	 * @return Unused for now
+	 */
 	private int Factor() {
 		int recur = 0;
 		if (anyErrors) {
@@ -216,6 +226,12 @@ public class Syntactic {
 		return recur;
 	}
 
+	/**
+	 * Syntactically parses an unsigned constant in an arithmetic expression
+	 * Production rule: <unsigned number>
+	 *
+	 * @return Unused for now
+	 */
 	private int UnsignedConstant() {
 		int recur = 0;
 		if (anyErrors) {
@@ -229,6 +245,12 @@ public class Syntactic {
 		return recur;
 	}
 
+	/**
+	 * Syntactically parses an unsigned number in an arithmetic expression
+	 * Production rule: $FLOAT | $INTEGER
+	 *
+	 * @return Unused for now
+	 */
 	private int UnsignedNumber() {
 		int recur = 0;
 		if (anyErrors) {
@@ -245,6 +267,12 @@ public class Syntactic {
 		return recur;
 	}
 
+	/**
+	 * Syntactically parses an addition operation in an arithmetic expression
+	 * Production rule: $PLUS | $MINUS
+	 *
+	 * @return Unused for now
+	 */
 	private int AddOp() {
 		int recur = 0;
 		if (anyErrors) {
@@ -261,6 +289,12 @@ public class Syntactic {
 		return recur;
 	}
 
+	/**
+	 * Syntactically parses a sign in an arithmetic expression
+	 * Production rule: $PLUS | $MINUS
+	 *
+	 * @return Unused for now
+	 */
 	private int Sign() {
 		int recur = 0;
 		if (anyErrors) {
@@ -277,6 +311,12 @@ public class Syntactic {
 		return recur;
 	}
 
+	/**
+	 * Syntactically parses a multiplication operation in an arithmetic expression
+	 * Production rule: $MULTIPLY | $DIVIDE
+	 *
+	 * @return Unused for now
+	 */
 	private int MulOp() {
 		int recur = 0;
 		if (anyErrors) {
