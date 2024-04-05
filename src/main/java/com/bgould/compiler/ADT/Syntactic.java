@@ -149,7 +149,7 @@ public class Syntactic {
 		trace("SimpleExpression", true);
 
 		// optional sign value
-		if (isAddOpp(token)) {
+		if (isAddOp(token)) {
 			recur = Sign();
 		}
 
@@ -157,7 +157,7 @@ public class Syntactic {
 		recur = Term();
 
 		// optional additional terms
-		while ((!anyErrors) && isAddOpp(token)) {
+		while ((!anyErrors) && isAddOp(token)) {
 			recur = AddOp();
 			recur = Term();
 		}
@@ -183,7 +183,7 @@ public class Syntactic {
 		recur = Factor();
 
 		// Optional additional factors
-		while ((!anyErrors) && isMulOpp(token)) {
+		while ((!anyErrors) && isMulOp(token)) {
 			recur = MulOp();
 			recur = Factor();
 		}
@@ -281,7 +281,7 @@ public class Syntactic {
 		}
 		trace("AddOp", true);
 
-		if (!isAddOpp(token)) {
+		if (!isAddOp(token)) {
 			error("+ or -", token.lexeme);
 		}
 		token = lex.GetNextToken();
@@ -303,7 +303,7 @@ public class Syntactic {
 		}
 		trace("Sign", true);
 
-		if (!isAddOpp(token)) {
+		if (!isAddOp(token)) {
 			error("+ or -", token.lexeme);
 		}
 		token = lex.GetNextToken();
@@ -325,7 +325,7 @@ public class Syntactic {
 		}
 		trace("MulOp", true);
 
-		if (!isMulOpp(token)) {
+		if (!isMulOp(token)) {
 			error("* or /", token.lexeme);
 		}
 		token = lex.GetNextToken();
@@ -435,11 +435,11 @@ public class Syntactic {
 		return result;
 	}
 
-	private boolean isAddOpp(Lexical.token t) {
+	private boolean isAddOp(Lexical.token t) {
 		return t.code == lex.codeFor("PLUS") || t.code == lex.codeFor("MNUS");
 	}
 
-	private boolean isMulOpp(Lexical.token t) {
+	private boolean isMulOp(Lexical.token t) {
 		return t.code == lex.codeFor("DVDE") || t.code == lex.codeFor("MTPY");
 	}
 
