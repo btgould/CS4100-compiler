@@ -357,7 +357,7 @@ public class Lexical {
 	}
 
 	private boolean isPrefix(char ch) { return ((ch == ':') || (ch == '<') || (ch == '>')); }
-	private boolean isStringStart(char ch) { return ch == '\''; }
+	private boolean isStringStart(char ch) { return ch == '"'; }
 	// global char
 	char currCh;
 
