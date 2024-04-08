@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.bgould.compiler</groupId>
   <artifactId>gould</artifactId>
-  <version>syntax-analyzer-A</version>
+  <version>syntax-analyzer-B</version>
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
@@ -28,7 +28,7 @@
         <configuration>
           <mainClass>com.bgould.compiler.Main</mainClass>
           <arguments>
-            <argument>GoodSyntaxA-SP24.txt</argument>
+            <argument>SyntaxB-GOOD-SP24.txt</argument>
           </arguments>
         </configuration>
       </plugin>
