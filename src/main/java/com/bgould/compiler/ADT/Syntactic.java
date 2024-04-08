@@ -1,5 +1,7 @@
 package com.bgould.compiler.ADT;
 
+import javax.swing.plaf.nimbus.State;
+
 /**
  * Class performing CFG based syntactic parsing of source code
  *
@@ -243,11 +245,17 @@ public class Syntactic {
 		} else if (token.code == lex.codeFor("BGIN")) { // block-body
 			recur = BlockBody();
 		} else if (token.code == lex.codeFor("IF__")) { // if statement
+			recur = handleIf();
 		} else if (token.code == lex.codeFor("WHIL")) { // while loop
+			recur = handleWhile();
 		} else if (token.code == lex.codeFor("REPT")) { // repeat until loop
+			recur = handleRepeat();
 		} else if (token.code == lex.codeFor("FOR_")) { // for loop
+			recur = handleFor();
 		} else if (token.code == lex.codeFor("WTLN")) { // writeln statement
+			recur = handleWriteln();
 		} else if (token.code == lex.codeFor("RDLN")) { // readln statement
+			recur = handleReadln();
 		} else {
 			error("Statement start", token.lexeme);
 		}
@@ -275,6 +283,210 @@ public class Syntactic {
 		}
 
 		trace("handleAssignment", false);
+		return recur;
+	}
+
+	private int handleIf() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("handleIf", true);
+
+		// Get mandatory IF
+		if (token.code != lex.codeFor("IF__")) {
+			error(lex.reserveFor("IF__"), token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		// Get conditional expression
+		recur = RelExpression();
+
+		// Get mandatory THEN
+		if (token.code != lex.codeFor("THEN")) {
+			error(lex.reserveFor("THEN"), token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		// Get conditional statement
+		recur = Statement();
+
+		// Get optional else
+		if (token.code == lex.codeFor("ELSE")) {
+			token = lex.GetNextToken();
+			recur = Statement();
+		}
+
+		trace("handleIf", false);
+		return recur;
+	}
+
+	private int handleWhile() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("handleWhile", true);
+
+		// Get mandatory WHILE
+		if (token.code != lex.codeFor("WHIL")) {
+			error(lex.reserveFor("WHIL"), token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		// Get conditional expression
+		recur = RelExpression();
+
+		// Get mandatory DO
+		if (token.code != lex.codeFor("DO__")) {
+			error(lex.reserveFor("DO__"), token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		// Get conditional statement
+		recur = Statement();
+
+		trace("handleWhile", false);
+		return recur;
+	}
+
+	private int handleRepeat() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("handleRepeat", true);
+
+		// Get mandatory REPEAT
+		if (token.code != lex.codeFor("REPT")) {
+			error(lex.reserveFor("REPT"), token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		// Get conditional statement
+		recur = Statement();
+
+		// Get mandatory UNTIL
+		if (token.code != lex.codeFor("UNTL")) {
+			error(lex.reserveFor("UNTL"), token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		// Get conditional expression
+		recur = RelExpression();
+
+		trace("handleRepeat", false);
+		return recur;
+	}
+
+	private int handleFor() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("handleFor", true);
+
+		// Get FOR intializer
+		if (token.code != lex.codeFor("FOR_")) {
+			error(lex.reserveFor("FOR_"), token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		recur = Variable();
+
+		if (token.code != lex.codeFor("DEFN")) {
+			error(lex.reserveFor("DEFN"), token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		recur = SimpleExpression();
+
+		if (token.code != lex.codeFor("TO__")) {
+			error(lex.reserveFor("TO__"), token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		recur = SimpleExpression();
+
+		// Get repeated statement
+		if (token.code != lex.codeFor("DO__")) {
+			error(lex.reserveFor("DO__"), token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		Statement();
+
+		trace("handleFor", false);
+		return recur;
+	}
+
+	private int handleWriteln() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("handleWriteln", true);
+
+		// Get command start
+		if (token.code != lex.codeFor("WTLN")) {
+			error(lex.reserveFor("WTLN"), token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		if (token.code != lex.codeFor("LFTP")) {
+			error(lex.reserveFor("LFTP"), token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		// Get expression to write
+		if (isAddOp(token) || isNumber(token)) {
+			recur = SimpleExpression();
+		} else if (token.code == lex.codeFor("IDNT")) {
+			recur = Identifier();
+		} else if (token.code == lex.codeFor("STRV")) {
+			recur = StringConst();
+		} else {
+			error("expression, identifier, or string", token.lexeme);
+		}
+
+		// Get command end
+		if (token.code != lex.codeFor("RITP")) {
+			error(lex.reserveFor("RITP"), token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		trace("handleWriteln", false);
+		return recur;
+	}
+
+	private int handleReadln() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("handleReadln", true);
+
+		// Get command start
+		if (token.code != lex.codeFor("RDLN")) {
+			error(lex.reserveFor("RDLN"), token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		if (token.code != lex.codeFor("LFTP")) {
+			error(lex.reserveFor("LFTP"), token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		// Get variable to read into
+		recur = Identifier();
+
+		// Get command end
+		if (token.code != lex.codeFor("RITP")) {
+			error(lex.reserveFor("RITP"), token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		trace("handleReadln", false);
 		return recur;
 	}
 
@@ -370,9 +582,50 @@ public class Syntactic {
 		return recur;
 	}
 
+	/**
+	 * Parses a single relative / conditional expression.
+	 * Production rule: <relexpression> -> <simple expression> <relop> <simple expression>
+	 *
+	 * @return Unused for now
+	 */
+	private int RelExpression() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("RelExpression", true);
+
+		recur = SimpleExpression();
+		recur = RelOp();
+		recur = SimpleExpression();
+
+		trace("RelExpression", false);
+		return recur;
+	}
+
 	// =========================================================================
 	// Token-level non-terminals
 	// =========================================================================
+
+	// Non-terminal VARIABLE just looks for an IDENTIFIER. Later, a
+	//  type-check can verify compatible math ops, or if casting is required.
+	private int Variable() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("Variable", true);
+
+		if ((token.code == lex.codeFor("IDNT"))) {
+			// bookkeeping and move on
+			token = lex.GetNextToken();
+		} else {
+			error("Variable", token.lexeme);
+		}
+
+		trace("Variable", false);
+		return recur;
+	}
 
 	/**
 	 * Parses an identifier
@@ -463,6 +716,28 @@ public class Syntactic {
 	}
 
 	/**
+	 * Syntactically parses a string constant
+	 * Production rule: $STRING
+	 *
+	 * @return Unused for now
+	 */
+	private int StringConst() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("StringConst", true);
+
+		if (token.code != lex.codeFor("STRV")) {
+			error("string constant", token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		trace("StringConst", false);
+		return recur;
+	}
+
+	/**
 	 * Syntactically parses an addition operation in an arithmetic expression
 	 * Production rule: $PLUS | $MINUS
 	 *
@@ -528,23 +803,26 @@ public class Syntactic {
 		return recur;
 	}
 
-	// Non-terminal VARIABLE just looks for an IDENTIFIER. Later, a
-	//  type-check can verify compatible math ops, or if casting is required.
-	private int Variable() {
+	/**
+	 * Syntactically parses a relative operation in an logical expression
+	 * Production rule: <relop> -> $EQ | $LSS | $GTR | $NEQ | $LEQ | $GEQ
+	 *
+	 * @return Unused for now
+	 */
+	private int RelOp() {
 		int recur = 0;
 		if (anyErrors) {
 			return -1;
 		}
-		trace("Variable", true);
+		trace("RelOp", true);
 
-		if ((token.code == lex.codeFor("IDNT"))) {
-			// bookkeeping and move on
-			token = lex.GetNextToken();
-		} else {
-			error("Variable", token.lexeme);
+		if (token.code != lex.codeFor("GTHN") && token.code != lex.codeFor("LTHN") &&
+		    token.code != lex.codeFor("GRET") && token.code != lex.codeFor("LSET") &&
+		    token.code != lex.codeFor("EQUL") && token.code != lex.codeFor("NEQL")) {
+			error("relative expression", token.lexeme);
 		}
 
-		trace("Variable", false);
+		trace("RelOp", false);
 		return recur;
 	}
 

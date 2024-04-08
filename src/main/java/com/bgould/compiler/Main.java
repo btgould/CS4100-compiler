@@ -29,7 +29,7 @@ import com.bgould.compiler.ADT.Syntactic;
  * <variable> -> <identifier>
  * <relexpression> -> <simple expression> <relop> <simple expression>
  * <relop> -> $EQ | $LSS | $GTR | $NEQ | $LEQ | $GEQ
- * <simple expression>-> [<sign>] <term> {<addop> <term>}*
+ * <simple expression> -> [<sign>] <term> {<addop> <term>}*
  * <addop> -> $PLUS | $MINUS
  * <sign> -> $PLUS | $MINUS
  * <term> -> <factor> {<mulop> <factor> }*
