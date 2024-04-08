@@ -159,20 +159,27 @@ public class Syntactic {
 		}
 		trace("VariableDeclaration", true);
 
-		// Get list of identifiers to declare
-		Identifier();
-		while (token.code == lex.codeFor("COMA")) {
-			token = lex.GetNextToken();
+		do {
+			// Get list of identifiers to declare
 			Identifier();
-		}
+			while (token.code == lex.codeFor("COMA")) {
+				token = lex.GetNextToken();
+				Identifier();
+			}
 
-		// Get type of identifiers
-		if (token.code == lex.codeFor("COLN")) {
+			// Get type of identifiers
+			if (token.code == lex.codeFor("COLN")) {
+				token = lex.GetNextToken();
+				SimpleType();
+			} else {
+				error("':'", token.lexeme);
+			}
+
+			if (token.code != lex.codeFor("SCLN")) {
+				error("';'", token.lexeme);
+			}
 			token = lex.GetNextToken();
-			SimpleType();
-		} else {
-			error("':'", token.lexeme);
-		}
+		} while (token.code == lex.codeFor("IDNT"));
 
 		trace("VariableDeclaration", false);
 		return recur;
