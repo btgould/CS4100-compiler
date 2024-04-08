@@ -828,6 +828,7 @@ public class Syntactic {
 		    token.code != lex.codeFor("EQUL") && token.code != lex.codeFor("NEQL")) {
 			error("relative expression", token.lexeme);
 		}
+		token = lex.GetNextToken();
 
 		trace("RelOp", false);
 		return recur;
