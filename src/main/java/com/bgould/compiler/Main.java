@@ -11,7 +11,7 @@ import com.bgould.compiler.ADT.Syntactic;
  * <block> -> {<variable-dec-sec>}* <block-body>
  * <variable-dec-sec> -> $VAR <variable-declaration>
  * <variable-declaration> -> {<identifier> {$COMMA <identifier>}* $COLON <simple type> $SEMICOLON}+
- * <block-body> -> $BEGIN <statement> {$SCOLN <statement>} $END
+ * <block-body> -> $BEGIN <statement> {$SCOLN <statement>}* $END
  *
  * <statement> -> {
  *      [

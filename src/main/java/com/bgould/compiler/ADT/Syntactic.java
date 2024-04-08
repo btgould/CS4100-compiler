@@ -51,7 +51,12 @@ public class Syntactic {
 		return recur;
 	}
 
-	// Non Terminal PROGRAM is fully implemented here.
+	/**
+	 * Top-level parser for a program.
+	 * Production rule: <program> -> $UNIT <identifier> $SEMICOLON <block> $PERIOD
+	 *
+	 * @return Unused for now
+	 */
 	private int Program() {
 		int recur = 0;
 		if (anyErrors) {
@@ -85,13 +90,145 @@ public class Syntactic {
 		return recur;
 	}
 
-	// Non Terminal BLOCK is fully implemented here.
+	/**
+	 * Parses the main body of a program.
+	 * Production rule: <block> -> {<variable-dec-sec>}* <block-body>
+	 *
+	 * @return Unused for now
+	 */
 	private int Block() {
 		int recur = 0;
 		if (anyErrors) {
 			return -1;
 		}
 		trace("Block", true);
+
+		// optional variable declaration section
+		while (token.code == lex.codeFor("VAR_")) {
+			recur = VariableDeclarationSection();
+		}
+
+		// parse block body
+		recur = BlockBody();
+
+		trace("Block", false);
+		return recur;
+	}
+
+	/**
+	 * Parses the variable declaration section of the program
+	 * Production rule: <variable-dec-sec> -> $VAR <variable-declaration>
+	 *
+	 * @return Unused for now
+	 */
+	private int VariableDeclarationSection() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("VariableDeclarationSection", true);
+
+		if (token.code == lex.codeFor("VAR_")) {
+			token = lex.GetNextToken();
+			VariableDeclaration();
+		} else {
+			error(lex.reserveFor("VAR_"), token.lexeme);
+		}
+
+		trace("VariableDeclarationSection", false);
+		return recur;
+	}
+
+	/**
+	 * Parses the identifier and type information of variable declarations
+	 * Production rule: <variable-declaration> -> {<identifier> {$COMMA <identifier>}* $COLON
+	 * <simple type> $SEMICOLON}+
+	 *
+	 * @return Unused for now
+	 */
+	private int VariableDeclaration() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("VariableDeclaration", true);
+
+		// Get list of identifiers to declare
+		Identifier();
+		while (token.code == lex.codeFor("COMA")) {
+			token = lex.GetNextToken();
+			Identifier();
+		}
+
+		// Get type of identifiers
+		if (token.code == lex.codeFor("COLN")) {
+			token = lex.GetNextToken();
+			SimpleType();
+		} else {
+			error("':'", token.lexeme);
+		}
+
+		trace("VariableDeclaration", false);
+		return recur;
+	}
+
+	/**
+	 * Parses an identifier
+	 * Production rule: <identifier> -> $IDENTIFIER (Token code 50)
+	 *
+	 * @return Unused for now
+	 */
+	private int Identifier() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("Identifier", true);
+
+		if (token.code != lex.codeFor("IDNT")) {
+			error("identifier", token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		trace("Identifier", false);
+		return recur;
+	}
+
+	/**
+	 * Parses an type declaration
+	 * Production rule: $INTEGER | $FLOAT | $STRING
+	 *
+	 * @return Unused for now
+	 */
+	private int SimpleType() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("SimpleType", true);
+
+		if (token.code != lex.codeFor("INTR") && token.code != lex.codeFor("DFPR") &&
+		    token.code != lex.codeFor("STRR")) {
+			error(lex.reserveFor("INTR") + ", " + lex.reserveFor("DFPR") + ", or " + lex.reserveFor("STRR"), token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		trace("SimpleType", false);
+		return recur;
+	}
+
+	/**
+	 * Parse a block of statements
+	 * Production rule: $BEGIN <statement> {$SCOLN <statement>}* $END
+	 *
+	 * @return Unused for now
+	 */
+	private int BlockBody() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("BlockBody", true);
 
 		if (token.code == lex.codeFor("BGIN")) {
 			token = lex.GetNextToken();
@@ -109,7 +246,7 @@ public class Syntactic {
 			error(lex.reserveFor("BGIN"), token.lexeme);
 		}
 
-		trace("Block", false);
+		trace("BlockBody", false);
 		return recur;
 	}
 
@@ -446,20 +583,4 @@ public class Syntactic {
 	private boolean isNumber(Lexical.token t) {
 		return t.code == lex.codeFor("INTV") || t.code == lex.codeFor("DFPV");
 	}
-
-	/* Template for all the non-terminal method bodies
-	// ALL OF THEM SHOULD LOOK LIKE THE FOLLOWING AT THE ENTRY/EXIT POINTS
-	private int exampleNonTerminal(){
-	int recur = 0; //Return value used later
-	if (anyErrors) { // Error check for fast exit, error status -1
-	return -1;
-	}
-	trace("NameOfThisMethod", true);
-	// The unique non-terminal stuff goes here, assigning to "recur" based
-	// on recursive calls that were made
-	trace("NameOfThisMethod", false);
-	// Final result of assigning to "recur" in the body is returned
-	return recur;
-	}
-	*/
 }
