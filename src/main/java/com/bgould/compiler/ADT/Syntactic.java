@@ -51,6 +51,10 @@ public class Syntactic {
 		return recur;
 	}
 
+	// =========================================================================
+	// Top-level non-terminals
+	// =========================================================================
+
 	/**
 	 * Top-level parser for a program.
 	 * Production rule: <program> -> $UNIT <identifier> $SEMICOLON <block> $PERIOD
@@ -173,51 +177,6 @@ public class Syntactic {
 	}
 
 	/**
-	 * Parses an identifier
-	 * Production rule: <identifier> -> $IDENTIFIER (Token code 50)
-	 *
-	 * @return Unused for now
-	 */
-	private int Identifier() {
-		int recur = 0;
-		if (anyErrors) {
-			return -1;
-		}
-		trace("Identifier", true);
-
-		if (token.code != lex.codeFor("IDNT")) {
-			error("identifier", token.lexeme);
-		}
-		token = lex.GetNextToken();
-
-		trace("Identifier", false);
-		return recur;
-	}
-
-	/**
-	 * Parses an type declaration
-	 * Production rule: $INTEGER | $FLOAT | $STRING
-	 *
-	 * @return Unused for now
-	 */
-	private int SimpleType() {
-		int recur = 0;
-		if (anyErrors) {
-			return -1;
-		}
-		trace("SimpleType", true);
-
-		if (token.code != lex.codeFor("INTR") && token.code != lex.codeFor("DFPR") &&
-		    token.code != lex.codeFor("STRR")) {
-			error(lex.reserveFor("INTR") + ", " + lex.reserveFor("DFPR") + ", or " + lex.reserveFor("STRR"), token.lexeme);
-		}
-		token = lex.GetNextToken();
-
-		trace("SimpleType", false);
-		return recur;
-	}
-
-	/**
 	 * Parse a block of statements
 	 * Production rule: $BEGIN <statement> {$SCOLN <statement>}* $END
 	 *
@@ -247,6 +206,53 @@ public class Syntactic {
 		}
 
 		trace("BlockBody", false);
+		return recur;
+	}
+
+	// =========================================================================
+	// Statement level non-terminals
+	// =========================================================================
+
+	/**
+	 * Parses a single statement
+	 * Production rule:
+	 * <statement> -> {
+	 *      [
+	 *          <variable> $ASSIGN (<simple expression> | <string literal>) |
+	 *          <block-body> |
+	 *          $IF <relexpression> $THEN <statement> [$ELSE <statement>] |
+	 *          $WHILE <relexpression> DO <statement> |
+	 *          $REPEAT <statement> $UNTIL <relexpression> |
+	 *          $FOR <variable> $ASSIGN <simple expression> $TO <simple expression> $DO <statement>
+	 * | $WRITELN $LPAR (<simple expression> | <identifier> | <stringconst> ) $RPAR | $READLN $LPAR
+	 * <identifier> $RPAR
+	 *      ]+
+	 * }
+	 *
+	 * @return Unused for now
+	 */
+	private int Statement() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("Statement", true);
+
+		if (token.code == lex.codeFor("IDNT")) { // assignment
+			recur = handleAssignment();
+		} else if (token.code == lex.codeFor("BGIN")) { // block-body
+			recur = BlockBody();
+		} else if (token.code == lex.codeFor("IF__")) { // if statement
+		} else if (token.code == lex.codeFor("WHIL")) { // while loop
+		} else if (token.code == lex.codeFor("REPT")) { // repeat until loop
+		} else if (token.code == lex.codeFor("FOR_")) { // for loop
+		} else if (token.code == lex.codeFor("WTLN")) { // writeln statement
+		} else if (token.code == lex.codeFor("RDLN")) { // readln statement
+		} else {
+			error("Statement start", token.lexeme);
+		}
+
+		trace("Statement", false);
 		return recur;
 	}
 
@@ -364,6 +370,57 @@ public class Syntactic {
 		return recur;
 	}
 
+	// =========================================================================
+	// Token-level non-terminals
+	// =========================================================================
+
+	/**
+	 * Parses an identifier
+	 * Production rule: <identifier> -> $IDENTIFIER (Token code 50)
+	 *
+	 * @return Unused for now
+	 */
+	private int Identifier() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("Identifier", true);
+
+		if (token.code != lex.codeFor("IDNT")) {
+			error("identifier", token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		trace("Identifier", false);
+		return recur;
+	}
+
+	/**
+	 * Parses an type declaration
+	 * Production rule: $INTEGER | $FLOAT | $STRING
+	 *
+	 * @return Unused for now
+	 */
+	private int SimpleType() {
+		int recur = 0;
+		if (anyErrors) {
+			return -1;
+		}
+		trace("SimpleType", true);
+
+		if (token.code != lex.codeFor("INTR") && token.code != lex.codeFor("DFPR") &&
+		    token.code != lex.codeFor("STRR")) {
+			error(lex.reserveFor("INTR") + ", " + lex.reserveFor("DFPR") + ", or " +
+			          lex.reserveFor("STRR"),
+			      token.lexeme);
+		}
+		token = lex.GetNextToken();
+
+		trace("SimpleType", false);
+		return recur;
+	}
+
 	/**
 	 * Syntactically parses an unsigned constant in an arithmetic expression
 	 * Production rule: <unsigned number>
@@ -471,32 +528,6 @@ public class Syntactic {
 		return recur;
 	}
 
-	// Eventually this will handle all possible statement starts in
-	// a nested if/else or switch structure. Only ASSIGNMENT is implemented now.
-	private int Statement() {
-		int recur = 0;
-		if (anyErrors) {
-			return -1;
-		}
-		trace("Statement", true);
-
-		if (token.code == lex.codeFor("IDNT")) { // must be an ASSIGNMENT
-			recur = handleAssignment();
-		} else {
-			if (token.code == lex.codeFor("IF__")) { // must be an IF
-				// this would handle the rest of the IF statment IN PART B
-			} else
-			// if/elses should look for the other possible statement starts...
-			// but not until PART B
-			{
-				error("Statement start", token.lexeme);
-			}
-		}
-
-		trace("Statement", false);
-		return recur;
-	}
-
 	// Non-terminal VARIABLE just looks for an IDENTIFIER. Later, a
 	//  type-check can verify compatible math ops, or if casting is required.
 	private int Variable() {
@@ -517,10 +548,10 @@ public class Syntactic {
 		return recur;
 	}
 
-	/**
-	 * *************************************************
-	 * UTILITY FUNCTIONS USED THROUGHOUT THIS CLASS
-	 */
+	// =========================================================================
+	// UTILITY FUNCTIONS USED THROUGHOUT THIS CLASS
+	// =========================================================================
+
 	/**
 	 * Writes a simple error message to stdout. Currently, the only type of error message supported
 	 * by this function is when one type of expression is expected, but a different type is found.
