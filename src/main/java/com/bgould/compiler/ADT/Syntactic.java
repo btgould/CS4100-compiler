@@ -1,7 +1,5 @@
 package com.bgould.compiler.ADT;
 
-import javax.swing.plaf.nimbus.State;
-
 /**
  * Class performing CFG based syntactic parsing of source code
  *
@@ -170,6 +168,7 @@ public class Syntactic {
 			// Get type of identifiers
 			if (token.code == lex.codeFor("COLN")) {
 				token = lex.GetNextToken();
+				// TODO: update type of all symbols in this declaration here
 				SimpleType();
 			} else {
 				error("':'", token.lexeme);
@@ -446,10 +445,8 @@ public class Syntactic {
 		token = lex.GetNextToken();
 
 		// Get expression to write
-		if (isAddOp(token) || isNumber(token)) {
+		if (isAddOp(token) || isNumber(token) || token.code == lex.codeFor("IDNT")) {
 			recur = SimpleExpression();
-		} else if (token.code == lex.codeFor("IDNT")) {
-			recur = Identifier();
 		} else if (token.code == lex.codeFor("STRV")) {
 			recur = StringConst();
 		} else {
@@ -485,6 +482,8 @@ public class Syntactic {
 		token = lex.GetNextToken();
 
 		// Get variable to read into
+		// CFG in assignment description expects an Identifier() here, but example output expects a
+		// Variable(). I have chosen to follow the CFG.
 		recur = Identifier();
 
 		// Get command end
@@ -617,6 +616,8 @@ public class Syntactic {
 	// Non-terminal VARIABLE just looks for an IDENTIFIER. Later, a
 	//  type-check can verify compatible math ops, or if casting is required.
 	private int Variable() {
+		// TODO: Add found identifier to symbol table. Use kind 'V', type 'I'
+		// TODO: Check if found identifier is undeclared using ST, print if not
 		int recur = 0;
 		if (anyErrors) {
 			return -1;
