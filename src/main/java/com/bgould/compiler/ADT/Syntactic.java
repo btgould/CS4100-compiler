@@ -304,8 +304,12 @@ public class Syntactic {
 		recur = Variable(); // Variable moves ahead, next token ready
 		if (token.code == lex.codeFor("DEFN")) {
 			token = lex.GetNextToken();
-			recur = SimpleExpression();
-			// TODO: This also needs to handle string literals
+
+			if (token.code == lex.codeFor("STRR")) {
+				recur = StringConst();
+			} else {
+				recur = SimpleExpression();
+			}
 		} else {
 			error(lex.reserveFor("DEFN"), token.lexeme);
 		}
