@@ -1,5 +1,7 @@
 package com.bgould.compiler.ADT;
 
+import java.util.ArrayList;
+
 /**
  * Class performing CFG based syntactic parsing of source code
  *
@@ -158,17 +160,36 @@ public class Syntactic {
 		trace("VariableDeclaration", true);
 
 		do {
+			ArrayList<Integer> variableIdx = new ArrayList<>();
 			// Get list of identifiers to declare
+			variableIdx.add(symbolList.AddSymbol(
+				token.lexeme, 'V', 0)); // if not identifier, error will show in Identifier()
 			Identifier();
 			while (token.code == lex.codeFor("COMA")) {
 				token = lex.GetNextToken();
+
+				// Add found identifier to symbol table.
+				variableIdx.add(symbolList.AddSymbol(token.lexeme, 'V', 0));
+
 				Identifier();
 			}
 
 			// Get type of identifiers
 			if (token.code == lex.codeFor("COLN")) {
 				token = lex.GetNextToken();
-				// TODO: update type of all symbols in this declaration here
+
+				// Update type of all symbols in this declaration
+				// Variables are int by default, only need to change type if double or string
+				if (token.code == lex.codeFor("DFPR")) {
+					for (int i : variableIdx) {
+						symbolList.UpdateSymbol(i, 'V', 0.0f);
+					}
+				} else if (token.code == lex.codeFor("STRR")) {
+					for (int i : variableIdx) {
+						symbolList.UpdateSymbol(i, 'V', "");
+					}
+				} // if token lexeme is unrecognized, SimpleType will output error
+
 				SimpleType();
 			} else {
 				error("':'", token.lexeme);
@@ -284,6 +305,7 @@ public class Syntactic {
 		if (token.code == lex.codeFor("DEFN")) {
 			token = lex.GetNextToken();
 			recur = SimpleExpression();
+			// TODO: This also needs to handle string literals
 		} else {
 			error(lex.reserveFor("DEFN"), token.lexeme);
 		}
@@ -616,8 +638,6 @@ public class Syntactic {
 	// Non-terminal VARIABLE just looks for an IDENTIFIER. Later, a
 	//  type-check can verify compatible math ops, or if casting is required.
 	private int Variable() {
-		// TODO: Add found identifier to symbol table. Use kind 'V', type 'I'
-		// TODO: Check if found identifier is undeclared using ST, print if not
 		int recur = 0;
 		if (anyErrors) {
 			return -1;
@@ -626,6 +646,10 @@ public class Syntactic {
 
 		if ((token.code == lex.codeFor("IDNT"))) {
 			// bookkeeping and move on
+			if (symbolList.LookupSymbol(token.lexeme) == -1) {
+				System.out.println("ERROR: Undeclared identifier " + token.lexeme);
+				symbolList.AddSymbol(token.lexeme, 'V', 0);
+			}
 			token = lex.GetNextToken();
 		} else {
 			error("Variable", token.lexeme);

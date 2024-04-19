@@ -390,10 +390,6 @@ public class Lexical {
 		result.code = reserveWords.LookupName(result.lexeme);
 		if (result.code == -1) {
 			result.code = IDENTIFIER_CODE;
-
-			// Identifiers need to be added to the symbol table after truncation as needed
-			// Identifiers receive a value of 0 by default
-			saveSymbols.AddSymbol(result.lexeme, 'V', 0);
 		}
 
 		result.mnemonic = mnemonics.LookupCode(result.code);

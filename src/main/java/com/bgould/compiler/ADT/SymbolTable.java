@@ -21,6 +21,7 @@ public class SymbolTable {
 		public T getValue() { return value; }
 		public char getUsage() { return usage; }
 
+		public void setDataType(char dataType) { this.dataType = dataType; }
 		public void setUsage(char usage) { this.usage = usage; }
 		public void setValue(T value) { this.value = value; }
 
@@ -272,6 +273,7 @@ public class SymbolTable {
 			index); // This raises an exception if symbol is not an integer
 		// HACK: more specific exceptions
 		sym.setUsage(usage);
+		sym.setDataType('I');
 		sym.setValue(value);
 	}
 
@@ -299,6 +301,7 @@ public class SymbolTable {
 			index); // This raises an exception if symbol is not a floating-point
 		// HACK: more specific exceptions
 		sym.setUsage(usage);
+		sym.setDataType('F');
 		sym.setValue(value);
 	}
 
@@ -326,6 +329,7 @@ public class SymbolTable {
 			index); // This raises an exception if symbol is not a String
 		// HACK: more specific exceptions
 		sym.setUsage(usage);
+		sym.setDataType('S');
 		sym.setValue(value);
 	}
 
