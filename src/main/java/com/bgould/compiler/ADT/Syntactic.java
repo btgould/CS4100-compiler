@@ -219,16 +219,22 @@ public class Syntactic {
 		trace("BlockBody", true);
 
 		if (token.code == lex.codeFor("BGIN")) {
+			// Get first statement
 			token = lex.GetNextToken();
 			recur = Statement();
-			while ((token.code == lex.codeFor("SCLN")) && (!lex.EOF()) && (!anyErrors)) {
+
+			// Get optional extra statements
+			while ((token != null) && (token.code == lex.codeFor("SCLN")) && (!lex.EOF()) &&
+			       (!anyErrors)) {
 				token = lex.GetNextToken();
 				recur = Statement();
 			}
-			if (token.code == lex.codeFor("END_")) {
+
+			// get end of block
+			if (token != null && token.code == lex.codeFor("END_")) {
 				token = lex.GetNextToken();
 			} else {
-				error(lex.reserveFor("END_"), token.lexeme);
+				error(lex.reserveFor("END_"), (token != null) ? token.lexeme : "EOF");
 			}
 		} else {
 			error(lex.reserveFor("BGIN"), token.lexeme);
@@ -267,25 +273,32 @@ public class Syntactic {
 		}
 		trace("Statement", true);
 
-		if (token.code == lex.codeFor("IDNT")) { // assignment
-			recur = handleAssignment();
-		} else if (token.code == lex.codeFor("BGIN")) { // block-body
-			recur = BlockBody();
-		} else if (token.code == lex.codeFor("IF__")) { // if statement
-			recur = handleIf();
-		} else if (token.code == lex.codeFor("WHIL")) { // while loop
-			recur = handleWhile();
-		} else if (token.code == lex.codeFor("REPT")) { // repeat until loop
-			recur = handleRepeat();
-		} else if (token.code == lex.codeFor("FOR_")) { // for loop
-			recur = handleFor();
-		} else if (token.code == lex.codeFor("WTLN")) { // writeln statement
-			recur = handleWriteln();
-		} else if (token.code == lex.codeFor("RDLN")) { // readln statement
-			recur = handleReadln();
-		} else {
-			error("Statement start", token.lexeme);
-		}
+		boolean badStatement = false;
+
+		do {
+			if (token.code == lex.codeFor("IDNT")) { // assignment
+				recur = handleAssignment();
+			} else if (token.code == lex.codeFor("BGIN")) { // block-body
+				recur = BlockBody();
+			} else if (token.code == lex.codeFor("IF__")) { // if statement
+				recur = handleIf();
+			} else if (token.code == lex.codeFor("WHIL")) { // while loop
+				recur = handleWhile();
+			} else if (token.code == lex.codeFor("REPT")) { // repeat until loop
+				recur = handleRepeat();
+			} else if (token.code == lex.codeFor("FOR_")) { // for loop
+				recur = handleFor();
+			} else if (token.code == lex.codeFor("WTLN")) { // writeln statement
+				recur = handleWriteln();
+			} else if (token.code == lex.codeFor("RDLN")) { // readln statement
+				recur = handleReadln();
+			} else {
+				error("Statement start", token.lexeme);
+			}
+
+			// if errors in statement were found, we need to restart to find good statement
+			badStatement = resynch();
+		} while (badStatement);
 
 		trace("Statement", false);
 		return recur;
@@ -484,6 +497,10 @@ public class Syntactic {
 			error(lex.reserveFor("RITP"), token.lexeme);
 		}
 		token = lex.GetNextToken();
+		/* if (token.code != lex.codeFor("SCLN")) {
+		    error(lex.reserveFor("SCLN"), token.lexeme);
+		}
+		token = lex.GetNextToken(); */
 
 		trace("handleWriteln", false);
 		return recur;
@@ -907,6 +924,35 @@ public class Syntactic {
 		}
 	}
 
+	/**
+	 * Used in error recovery. If a malformed statement is found, this will skip tokens until the
+	 * start of a new statement is found.
+	 *
+	 * @return true if a malformed statement was found, false otherwise
+	 */
+	private boolean resynch() {
+		if (!anyErrors)
+			return false;
+
+		System.out.println("** Error recovery: Resynching...");
+
+		// search until token starts a new statement
+		while (!lex.EOF() && !isStatementStart(token)) {
+			token = lex.GetNextToken();
+		}
+
+		if (lex.EOF()) {
+			System.out.println("** Resynch failed: reached EOF");
+			return false;
+		} else {
+			// assume rest of source is error free
+			anyErrors = false;
+			System.out.println("** Found statement start: " + token.lexeme);
+		}
+
+		return true;
+	}
+
 	// repeatChar returns a string containing x repetitions of string s;
 	// nice for making a varying indent format
 	private String repeatChar(String s, int x) {
@@ -928,5 +974,12 @@ public class Syntactic {
 
 	private boolean isNumber(Lexical.token t) {
 		return t.code == lex.codeFor("INTV") || t.code == lex.codeFor("DFPV");
+	}
+
+	private boolean isStatementStart(Lexical.token t) {
+		return token.code == lex.codeFor("IDNT") || token.code == lex.codeFor("BGIN") ||
+		    token.code == lex.codeFor("IF__") || token.code == lex.codeFor("WHIL") ||
+		    token.code == lex.codeFor("REPT") || token.code == lex.codeFor("FOR_") ||
+		    token.code == lex.codeFor("WTLN") || token.code == lex.codeFor("RDLN");
 	}
 }
