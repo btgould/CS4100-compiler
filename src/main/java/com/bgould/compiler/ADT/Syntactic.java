@@ -224,17 +224,16 @@ public class Syntactic {
 			recur = Statement();
 
 			// Get optional extra statements
-			while ((token != null) && (token.code == lex.codeFor("SCLN")) && (!lex.EOF()) &&
-			       (!anyErrors)) {
+			while ((token.code == lex.codeFor("SCLN")) && (!lex.EOF()) && (!anyErrors)) {
 				token = lex.GetNextToken();
 				recur = Statement();
 			}
 
 			// get end of block
-			if (token != null && token.code == lex.codeFor("END_")) {
+			if (token.code == lex.codeFor("END_")) {
 				token = lex.GetNextToken();
 			} else {
-				error(lex.reserveFor("END_"), (token != null) ? token.lexeme : "EOF");
+				error(lex.reserveFor("END_"), token.lexeme);
 			}
 		} else {
 			error(lex.reserveFor("BGIN"), token.lexeme);

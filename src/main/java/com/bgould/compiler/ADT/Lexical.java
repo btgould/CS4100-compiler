@@ -589,11 +589,13 @@ public class Lexical {
 		}
 
 		if ((result.lexeme.equals("")) || (EOF)) {
-			result = null;
+			result.lexeme = "EOF";
+			result.code = codeFor("UKWN");
+			result.mnemonic = "UKWN";
 		}
 
 		// Print result if needed
-		if (result != null) {
+		if (result.code != codeFor("UKWN")) {
 			if (printToken) {
 				System.out.println("\t" + result.mnemonic + " | \t" +
 				                   String.format("%04d", result.code) + " | \t" + result.lexeme);
