@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.bgould.compiler</groupId>
   <artifactId>gould</artifactId>
-  <version>syntax-analyzer-B</version>
+  <version>codegen</version>
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
@@ -28,7 +28,7 @@
         <configuration>
           <mainClass>com.bgould.compiler.Main</mainClass>
           <arguments>
-            <argument>SyntaxB-GOOD-SP24.txt</argument>
+            <argument>CodeGenBASIC_FA23.java</argument>
           </arguments>
         </configuration>
       </plugin>

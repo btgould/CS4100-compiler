@@ -19,3 +19,9 @@ BadSyntax-1-A-SP24.txt
 BadSyntax-2-A-SP24.txt
 SyntaxB-GOOD-SP24.txt
 SyntaxB-BAD-SP24.txt
+CodeGenBASIC_FA23.txt
+CodeGenFULL-FA23.txt
+*ST-before.txt
+*QUADS.txt
+*TRACE.txt
+*ST-after.txt
