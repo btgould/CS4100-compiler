@@ -8,6 +8,13 @@ import com.bgould.compiler.utils.StringUtils;
  * Implements a fixed index list of Symbols used in the compiled program.
  */
 public class SymbolTable {
+	public static final char LABEL_USAGE = 'L';
+	public static final char VARIABLE_USAGE = 'V';
+	public static final char CONSTANT_USAGE = 'C';
+	public static final char INTEGER_TYPE = 'I';
+	public static final char REAL_TYPE = 'F';
+	public static final char STRING_TYPE = 'S';
+
 	private class Symbol<T> {
 		public Symbol(String indentifier, char usage, char dataType, T value) {
 			this.indentifier = indentifier;

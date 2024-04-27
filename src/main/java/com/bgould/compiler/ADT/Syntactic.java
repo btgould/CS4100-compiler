@@ -1,6 +1,10 @@
 package com.bgould.compiler.ADT;
 
 import java.util.ArrayList;
+import java.util.UUID;
+
+import com.bgould.compiler.Interpreter;
+import com.bgould.compiler.ADT.Lexical.token;
 
 /**
  * Class performing CFG based syntactic parsing of source code
@@ -9,17 +13,30 @@ import java.util.ArrayList;
 public class Syntactic {
 	private String filein;          // The full file path to input file
 	private SymbolTable symbolList; // Symbol table storing ident/const
-	private Lexical lex;            // Lexical analyzer
-	private Lexical.token token;    // Next Token retrieved
-	private boolean traceon;        // Controls tracing mode
-	private int level = 0;          // Controls indent for trace mode
-	private boolean anyErrors;      // Set TRUE if an error happens
+	private QuadTable quads;
+	private Interpreter interp;
+	private Lexical lex;         // Lexical analyzer
+	private Lexical.token token; // Next Token retrieved
+
+	private boolean traceon;   // Controls tracing mode
+	private int level = 0;     // Controls indent for trace mode
+	private boolean anyErrors; // Set TRUE if an error happens
+
 	private final int symbolSize = 250;
+	private final int quadsSize = 1000;
+	private int Minus1Index;
+	private int Plus1Index;
 
 	public Syntactic(String filename, boolean traceOn) {
 		filein = filename;
 		traceon = traceOn;
 		symbolList = new SymbolTable(symbolSize);
+		Minus1Index = symbolList.AddSymbol("-1", SymbolTable.CONSTANT_USAGE, -1);
+		Plus1Index = symbolList.AddSymbol("1", SymbolTable.CONSTANT_USAGE, 1);
+
+		quads = new QuadTable(quadsSize);
+		interp = new Interpreter();
+
 		lex = new Lexical(filein, symbolList, true);
 		lex.setPrintToken(traceOn);
 		anyErrors = false;
@@ -28,11 +45,28 @@ public class Syntactic {
 	// The interface to the syntax analyzer, initiates parsing
 	// Uses variable RECUR to get return values throughout the non-terminal methods
 	public void parse() {
+		// Use source filename as pattern for symbol table and quad table output later
+		String filenameBase = filein.substring(0, filein.length() - 4);
+		System.out.println(filenameBase);
 		int recur = 0;
+
 		// prime the pump to get the first token to process
 		token = lex.GetNextToken();
 		// call PROGRAM
 		recur = Program();
+
+		// Done with recursion, so add the final STOP quad
+		quads.AddQuad(interp.opcodeFor("STOP"), 0, 0, 0);
+		// Print SymbolTable, QuadTable before execute
+		symbolList.PrintSymbolTable(filenameBase + "ST-before.txt");
+		quads.PrintQuadTable(filenameBase + "QUADS.txt");
+		// interpret
+		if (!anyErrors) {
+			interp.InterpretQuads(quads, symbolList, false, filenameBase + "TRACE.txt");
+		} else {
+			System.out.println("Errors, unable to run program.");
+		}
+		symbolList.PrintSymbolTable(filenameBase + "ST-after.txt");
 	}
 
 	// Non Terminal PROGIDENTIFIER is fully implemented here, leave it as-is.
@@ -45,7 +79,7 @@ public class Syntactic {
 		// This non-term is used to uniquely mark the program identifier
 		if (token.code == lex.codeFor("IDNT")) {
 			// Because this is the progIdentifier, it will get a 'P' type to prevent re-use as a var
-			symbolList.UpdateSymbol(symbolList.LookupSymbol(token.lexeme), 'P', 0);
+			symbolList.AddSymbol(token.lexeme, 'P', 0);
 			// move on
 			token = lex.GetNextToken();
 		}
@@ -306,28 +340,31 @@ public class Syntactic {
 	// Not a Non Terminal, but used to shorten Statement code body for readability.
 	//<variable> $COLON-EQUALS <simple expression>
 	private int handleAssignment() {
-		int recur = 0;
 		if (anyErrors) {
 			return -1;
 		}
 		trace("handleAssignment", true);
 
 		// have ident already in order to get to here, handle as Variable
-		recur = Variable(); // Variable moves ahead, next token ready
+		int varLoc = Variable(); // Variable moves ahead, next token ready
 		if (token.code == lex.codeFor("DEFN")) {
+			int valLoc;
 			token = lex.GetNextToken();
 
 			if (token.code == lex.codeFor("STRR")) {
-				recur = StringConst();
+				valLoc = StringConst();
 			} else {
-				recur = SimpleExpression();
+				valLoc = SimpleExpression();
 			}
+
+			// Generate code
+			quads.AddQuad(interp.opcodeFor("MOV"), valLoc, 0, varLoc);
 		} else {
 			error(lex.reserveFor("DEFN"), token.lexeme);
 		}
 
 		trace("handleAssignment", false);
-		return recur;
+		return varLoc;
 	}
 
 	private int handleIf() {
@@ -466,6 +503,7 @@ public class Syntactic {
 
 	private int handleWriteln() {
 		int recur = 0;
+		int toprint = 0;
 		if (anyErrors) {
 			return -1;
 		}
@@ -484,9 +522,9 @@ public class Syntactic {
 
 		// Get expression to write
 		if (isAddOp(token) || isNumber(token) || token.code == lex.codeFor("IDNT")) {
-			recur = SimpleExpression();
+			toprint = SimpleExpression();
 		} else if (token.code == lex.codeFor("STRV")) {
-			recur = StringConst();
+			toprint = StringConst();
 		} else {
 			error("expression, identifier, or string", token.lexeme);
 		}
@@ -496,17 +534,16 @@ public class Syntactic {
 			error(lex.reserveFor("RITP"), token.lexeme);
 		}
 		token = lex.GetNextToken();
-		/* if (token.code != lex.codeFor("SCLN")) {
-		    error(lex.reserveFor("SCLN"), token.lexeme);
-		}
-		token = lex.GetNextToken(); */
+
+		// Generate print instruction
+		quads.AddQuad(interp.opcodeFor("PRINT"), 0, 0, toprint);
 
 		trace("handleWriteln", false);
 		return recur;
 	}
 
 	private int handleReadln() {
-		int recur = 0;
+		int dst = 0;
 		if (anyErrors) {
 			return -1;
 		}
@@ -523,10 +560,7 @@ public class Syntactic {
 		}
 		token = lex.GetNextToken();
 
-		// Get variable to read into
-		// CFG in assignment description expects an Identifier() here, but example output expects a
-		// Variable(). I have chosen to follow the CFG.
-		recur = Identifier();
+		dst = Identifier();
 
 		// Get command end
 		if (token.code != lex.codeFor("RITP")) {
@@ -534,18 +568,22 @@ public class Syntactic {
 		}
 		token = lex.GetNextToken();
 
+		// Generate instructions
+		quads.AddQuad(interp.opcodeFor("READ"), 0, 0, dst);
+
 		trace("handleReadln", false);
-		return recur;
+		return dst;
 	}
 
 	/**
 	 * Syntactically parses a simple arithmetic expression.
 	 * Production rule: [<sign>] <term> {<addop> <term>}*
 	 *
-	 * @return Unused for now
+	 * @return Location of expression result as an index into the symbol table
 	 */
 	private int SimpleExpression() {
-		int recur = 0;
+		int left, right, signval, temp, opcode;
+		signval = 1;
 		if (anyErrors) {
 			return -1;
 		}
@@ -553,69 +591,82 @@ public class Syntactic {
 
 		// optional sign value
 		if (isAddOp(token)) {
-			recur = Sign();
+			signval = Sign();
 		}
 
 		// mandatory term
-		recur = Term();
+		left = Term();
+
+		if (signval == -1)
+			quads.AddQuad(interp.opcodeFor("MUL"), left, Minus1Index, left);
 
 		// optional additional terms
 		while ((!anyErrors) && isAddOp(token)) {
-			recur = AddOp();
-			recur = Term();
+			opcode = AddOp();
+			right = Term();
+
+			// Generate code
+			temp = GenSymbol();
+			quads.AddQuad(opcode, left, right, temp);
+			left = temp; // iterative result becomes new LHS
 		}
 
 		trace("SimpleExpression", false);
-		return recur;
+		return left;
 	}
 
 	/**
 	 * Syntactically parses a term in an arithmetic expression
 	 * Production rule: <factor> {<mulop> <factor> }*
 	 *
-	 * @return Unused for now
+	 * @return Location of expression result as an index into the symbol table
 	 */
 	private int Term() {
-		int recur = 0;
+		int left, right, temp, opcode;
 		if (anyErrors) {
 			return -1;
 		}
 		trace("Term", true);
 
 		// Mandatory first factor
-		recur = Factor();
+		left = Factor();
 
 		// Optional additional factors
 		while ((!anyErrors) && isMulOp(token)) {
-			recur = MulOp();
-			recur = Factor();
+			opcode = MulOp();
+			right = Factor();
+
+			// Generate code
+			temp = GenSymbol();
+			quads.AddQuad(opcode, left, right, temp);
+			left = temp; // iterative result becomes new LHS
 		}
 
 		trace("Term", false);
-		return recur;
+		return left;
 	}
 
 	/**
 	 * Syntactically parses a factor in an arithmetic expression
 	 * Production rule: <unsigned constant> | <variable> | $LPAR <simple expression> $RPAR
 	 *
-	 * @return Unused for now
+	 * @return Location of expression result as an index into the symbol table
 	 */
 	private int Factor() {
-		int recur = 0;
+		int ret = 0;
 		if (anyErrors) {
 			return -1;
 		}
 		trace("Factor", true);
 
 		if (isNumber(token)) { // some constant
-			recur = UnsignedConstant();
+			ret = UnsignedConstant();
 		} else if (token.code == lex.codeFor("IDNT")) { // some variable
-			recur = Variable();
+			ret = Variable();
 		} else if (token.code == lex.codeFor("LFTP")) { // nested expression
 			token = lex.GetNextToken();
 
-			recur = SimpleExpression();
+			ret = SimpleExpression();
 
 			if (token.code == lex.codeFor("RITP")) {
 				token = lex.GetNextToken();
@@ -627,7 +678,7 @@ public class Syntactic {
 		}
 
 		trace("Factor", false);
-		return recur;
+		return ret;
 	}
 
 	/**
@@ -666,9 +717,10 @@ public class Syntactic {
 
 		if ((token.code == lex.codeFor("IDNT"))) {
 			// bookkeeping and move on
-			if (symbolList.LookupSymbol(token.lexeme) == -1) {
+			recur = symbolList.LookupSymbol(token.lexeme);
+			if (recur == -1) {
 				System.out.println("ERROR: Undeclared identifier " + token.lexeme);
-				symbolList.AddSymbol(token.lexeme, 'V', 0);
+				recur = symbolList.AddSymbol(token.lexeme, SymbolTable.VARIABLE_USAGE, 0);
 			}
 			token = lex.GetNextToken();
 		} else {
@@ -683,10 +735,10 @@ public class Syntactic {
 	 * Parses an identifier
 	 * Production rule: <identifier> -> $IDENTIFIER (Token code 50)
 	 *
-	 * @return Unused for now
+	 * @return Location of identifier as an index into the symbol table
 	 */
 	private int Identifier() {
-		int recur = 0;
+		int ret = 0;
 		if (anyErrors) {
 			return -1;
 		}
@@ -695,10 +747,16 @@ public class Syntactic {
 		if (token.code != lex.codeFor("IDNT")) {
 			error("identifier", token.lexeme);
 		}
+
+		ret = symbolList.LookupSymbol(token.lexeme);
+		if (ret == -1) {
+			ret = symbolList.AddSymbol(token.lexeme, SymbolTable.VARIABLE_USAGE, 0);
+		}
+
 		token = lex.GetNextToken();
 
 		trace("Identifier", false);
-		return recur;
+		return ret;
 	}
 
 	/**
@@ -730,51 +788,62 @@ public class Syntactic {
 	 * Syntactically parses an unsigned constant in an arithmetic expression
 	 * Production rule: <unsigned number>
 	 *
-	 * @return Unused for now
+	 * @return Location of constant as an index into the symbol table
 	 */
 	private int UnsignedConstant() {
-		int recur = 0;
+		int ret = 0;
 		if (anyErrors) {
 			return -1;
 		}
 		trace("UnsignedConstant", true);
 
-		recur = UnsignedNumber();
+		ret = UnsignedNumber();
 
 		trace("UnsignedConstant", false);
-		return recur;
+		return ret;
 	}
 
 	/**
 	 * Syntactically parses an unsigned number in an arithmetic expression
 	 * Production rule: $FLOAT | $INTEGER
 	 *
-	 * @return Unused for now
+	 * @return Location of number as index into the symbol table
 	 */
 	private int UnsignedNumber() {
-		int recur = 0;
+		int ret = 0;
 		if (anyErrors) {
 			return -1;
 		}
 		trace("UnsignedNumber", true);
 
+		ret = symbolList.LookupSymbol(token.lexeme);
 		if (!isNumber(token)) {
 			error("Float or Integer", token.lexeme);
 		}
+
+		// Generate code
+		int val = Integer.parseInt(token.lexeme); // NOTE: assumed that only integer math is used
+		ret = symbolList.LookupSymbol(token.lexeme);
+		if (ret == -1) {
+			ret = symbolList.AddSymbol(token.lexeme, SymbolTable.VARIABLE_USAGE, val);
+		} else {
+			symbolList.UpdateSymbol(ret, SymbolTable.VARIABLE_USAGE, val);
+		}
+
 		token = lex.GetNextToken();
 
 		trace("UnsignedNumber", false);
-		return recur;
+		return ret;
 	}
 
 	/**
 	 * Syntactically parses a string constant
 	 * Production rule: $STRING
 	 *
-	 * @return Unused for now
+	 * @return The location of the string constant as an index into the symbol table
 	 */
 	private int StringConst() {
-		int recur = 0;
+		int location = 0;
 		if (anyErrors) {
 			return -1;
 		}
@@ -783,20 +852,25 @@ public class Syntactic {
 		if (token.code != lex.codeFor("STRV")) {
 			error("string constant", token.lexeme);
 		}
+
+		// NOTE: String should already be in symbol table; added by lexical
+		location = symbolList.LookupSymbol(token.lexeme);
+		symbolList.UpdateSymbol(location, SymbolTable.VARIABLE_USAGE, token.lexeme);
+
 		token = lex.GetNextToken();
 
 		trace("StringConst", false);
-		return recur;
+		return location;
 	}
 
 	/**
 	 * Syntactically parses an addition operation in an arithmetic expression
 	 * Production rule: $PLUS | $MINUS
 	 *
-	 * @return Unused for now
+	 * @return opcodeFor(ADD) if '+' found, opcodeFor(SUB) if '-' found
 	 */
 	private int AddOp() {
-		int recur = 0;
+		int ret = 0;
 		if (anyErrors) {
 			return -1;
 		}
@@ -805,20 +879,21 @@ public class Syntactic {
 		if (!isAddOp(token)) {
 			error("+ or -", token.lexeme);
 		}
+		ret = (token.lexeme.equals("+")) ? interp.opcodeFor("ADD") : interp.opcodeFor("SUB");
 		token = lex.GetNextToken();
 
 		trace("AddOp", false);
-		return recur;
+		return ret;
 	}
 
 	/**
 	 * Syntactically parses a sign in an arithmetic expression
 	 * Production rule: $PLUS | $MINUS
 	 *
-	 * @return Unused for now
+	 * @return +1 if '+' found, -1 if '-' found
 	 */
 	private int Sign() {
-		int recur = 0;
+		int ret = 0;
 		if (anyErrors) {
 			return -1;
 		}
@@ -827,20 +902,21 @@ public class Syntactic {
 		if (!isAddOp(token)) {
 			error("+ or -", token.lexeme);
 		}
+		ret = (token.lexeme.equals("+")) ? 1 : -1;
 		token = lex.GetNextToken();
 
 		trace("Sign", false);
-		return recur;
+		return ret;
 	}
 
 	/**
 	 * Syntactically parses a multiplication operation in an arithmetic expression
 	 * Production rule: $MULTIPLY | $DIVIDE
 	 *
-	 * @return Unused for now
+	 * @return opcodeFor(MUL) if '*' found, opcodeFor(DIV) if '/' found
 	 */
 	private int MulOp() {
-		int recur = 0;
+		int ret = 0;
 		if (anyErrors) {
 			return -1;
 		}
@@ -849,10 +925,11 @@ public class Syntactic {
 		if (!isMulOp(token)) {
 			error("* or /", token.lexeme);
 		}
+		ret = (token.lexeme.equals("*")) ? interp.opcodeFor("MUL") : interp.opcodeFor("DIV");
 		token = lex.GetNextToken();
 
 		trace("MulOp", false);
-		return recur;
+		return ret;
 	}
 
 	/**
@@ -950,6 +1027,11 @@ public class Syntactic {
 		}
 
 		return true;
+	}
+
+	private int GenSymbol() {
+		String name = UUID.randomUUID().toString();
+		return symbolList.AddSymbol(name, SymbolTable.VARIABLE_USAGE, 0);
 	}
 
 	// repeatChar returns a string containing x repetitions of string s;

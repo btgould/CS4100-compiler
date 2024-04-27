@@ -28,7 +28,7 @@
         <configuration>
           <mainClass>com.bgould.compiler.Main</mainClass>
           <arguments>
-            <argument>CodeGenBASIC_FA23.java</argument>
+            <argument>CodeGenBASIC_FA23.txt</argument>
           </arguments>
         </configuration>
       </plugin>

@@ -84,7 +84,7 @@ public class Interpreter {
 				System.out.println("Symbol name: " + s.GetSymbol(currInstruction[3]) +
 				                   ", Symbol value: " + s.GetInteger(currInstruction[3]));
 				break;
-			case "READ":                        // *op3 = next user input int
+			case "READ":                      // *op3 = next user input int
 				System.out.println("> ");       // prompt
 				input = inputScanner.nextInt(); // read int
 				s.UpdateSymbol(currInstruction[3], dstSymUsage, input);
@@ -199,6 +199,8 @@ public class Interpreter {
 
 		return sTableSuccess;
 	}
+
+	public int opcodeFor(String op) { return opTable.LookupName(op); }
 
 	/**
 	 * Adds QuadTable instruction names and their corresponding codes to the opcode table.
