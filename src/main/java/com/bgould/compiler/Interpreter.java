@@ -81,8 +81,21 @@ public class Interpreter {
 				s.UpdateSymbol(currInstruction[3], dstSymUsage, s.GetInteger(currInstruction[1]));
 				break;
 			case "PRINT": // display *op3 name and value
-				System.out.println("Symbol name: " + s.GetSymbol(currInstruction[3]) +
-				                   ", Symbol value: " + s.GetInteger(currInstruction[3]));
+				String value = "";
+				switch (s.GetDataType(currInstruction[3])) {
+				case SymbolTable.INTEGER_TYPE:
+					value = Integer.valueOf(s.GetInteger(currInstruction[3])).toString();
+					break;
+				case SymbolTable.REAL_TYPE:
+					value = Double.valueOf(s.GetFloat(currInstruction[3])).toString();
+					break;
+				case SymbolTable.STRING_TYPE:
+					value = s.GetString(currInstruction[3]);
+					break;
+				default:
+					throw new RuntimeException("Invalid symbol data type!");
+				}
+				System.out.println(value);
 				break;
 			case "READ":                      // *op3 = next user input int
 				System.out.println("> ");       // prompt
