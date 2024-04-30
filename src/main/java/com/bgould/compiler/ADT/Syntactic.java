@@ -441,7 +441,7 @@ public class Syntactic {
 		token = lex.GetNextToken();
 
 		// Get conditional statement
-		jumpQuad = Statement();
+		Statement();
 
 		// Implement loop jumps
 		quads.AddQuad(interp.opcodeFor("JMP"), 0, 0, testQuad);
@@ -502,6 +502,9 @@ public class Syntactic {
 
 		startVal = SimpleExpression();
 
+		quads.AddQuad(interp.opcodeFor("MOV"), startVal, 0, counter);
+
+		// Get FOR endpoint
 		if (token.code != lex.codeFor("TO__")) {
 			error(lex.reserveFor("TO__"), token.lexeme);
 		}
@@ -525,7 +528,7 @@ public class Syntactic {
 		// Conditional jump to loop start
 		temp = GenSymbol();
 		quads.AddQuad(interp.opcodeFor("SUB"), endVal, counter, temp);
-		quads.AddQuad(interp.opcodeFor("JP"), temp, 0, loopStartQuad);
+		quads.AddQuad(interp.opcodeFor("JNN"), temp, 0, loopStartQuad);
 
 		trace("handleFor", false);
 		return counter;
