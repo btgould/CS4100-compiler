@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import com.bgould.compiler.Interpreter;
-import com.bgould.compiler.ADT.Lexical.token;
 
 /**
  * Class performing CFG based syntactic parsing of source code
@@ -368,7 +367,7 @@ public class Syntactic {
 	}
 
 	private int handleIf() {
-		int recur = 0;
+		int jumpQuad, elseQuad, elseJumpQuad, endQuad;
 		if (anyErrors) {
 			return -1;
 		}
@@ -381,7 +380,7 @@ public class Syntactic {
 		token = lex.GetNextToken();
 
 		// Get conditional expression
-		recur = RelExpression();
+		jumpQuad = RelExpression();
 
 		// Get mandatory THEN
 		if (token.code != lex.codeFor("THEN")) {
@@ -390,20 +389,36 @@ public class Syntactic {
 		token = lex.GetNextToken();
 
 		// Get conditional statement
-		recur = Statement();
+		Statement();
 
 		// Get optional else
 		if (token.code == lex.codeFor("ELSE")) {
+			// after executing if branch, jump over else
+			elseJumpQuad = quads.NextQuad();
+			quads.AddQuad(interp.opcodeFor("JMP"), 0, 0, 0);
+
+			// Save location for jump to else branch
+			elseQuad = quads.NextQuad();
+			quads.UpdateJump(jumpQuad, elseQuad);
+
 			token = lex.GetNextToken();
-			recur = Statement();
+			Statement();
+
+			// save location for jump to end of statement
+			endQuad = quads.NextQuad();
+			quads.UpdateJump(elseJumpQuad, endQuad);
+		} else {
+			// save location for jump to end of statement
+			endQuad = quads.NextQuad();
+			quads.UpdateJump(jumpQuad, endQuad);
 		}
 
 		trace("handleIf", false);
-		return recur;
+		return jumpQuad;
 	}
 
 	private int handleWhile() {
-		int recur = 0;
+		int jumpQuad, testQuad;
 		if (anyErrors) {
 			return -1;
 		}
@@ -416,7 +431,8 @@ public class Syntactic {
 		token = lex.GetNextToken();
 
 		// Get conditional expression
-		recur = RelExpression();
+		testQuad = quads.NextQuad(); // quad location of test instruction
+		jumpQuad = RelExpression();
 
 		// Get mandatory DO
 		if (token.code != lex.codeFor("DO__")) {
@@ -425,10 +441,14 @@ public class Syntactic {
 		token = lex.GetNextToken();
 
 		// Get conditional statement
-		recur = Statement();
+		jumpQuad = Statement();
+
+		// Implement loop jumps
+		quads.AddQuad(interp.opcodeFor("JMP"), 0, 0, testQuad);
+		quads.UpdateJump(jumpQuad, quads.NextQuad());
 
 		trace("handleWhile", false);
-		return recur;
+		return jumpQuad;
 	}
 
 	private int handleRepeat() {
@@ -461,7 +481,7 @@ public class Syntactic {
 	}
 
 	private int handleFor() {
-		int recur = 0;
+		int counter, startVal, endVal, loopStartQuad, temp;
 		if (anyErrors) {
 			return -1;
 		}
@@ -473,21 +493,21 @@ public class Syntactic {
 		}
 		token = lex.GetNextToken();
 
-		recur = Variable();
+		counter = Variable();
 
 		if (token.code != lex.codeFor("DEFN")) {
 			error(lex.reserveFor("DEFN"), token.lexeme);
 		}
 		token = lex.GetNextToken();
 
-		recur = SimpleExpression();
+		startVal = SimpleExpression();
 
 		if (token.code != lex.codeFor("TO__")) {
 			error(lex.reserveFor("TO__"), token.lexeme);
 		}
 		token = lex.GetNextToken();
 
-		recur = SimpleExpression();
+		endVal = SimpleExpression();
 
 		// Get repeated statement
 		if (token.code != lex.codeFor("DO__")) {
@@ -495,10 +515,20 @@ public class Syntactic {
 		}
 		token = lex.GetNextToken();
 
+		loopStartQuad = quads.NextQuad();
+
 		Statement();
 
+		// Increment counter
+		quads.AddQuad(interp.opcodeFor("ADD"), counter, Plus1Index, counter);
+
+		// Conditional jump to loop start
+		temp = GenSymbol();
+		quads.AddQuad(interp.opcodeFor("SUB"), endVal, counter, temp);
+		quads.AddQuad(interp.opcodeFor("JP"), temp, 0, loopStartQuad);
+
 		trace("handleFor", false);
-		return recur;
+		return counter;
 	}
 
 	private int handleWriteln() {
@@ -685,21 +715,30 @@ public class Syntactic {
 	 * Parses a single relative / conditional expression.
 	 * Production rule: <relexpression> -> <simple expression> <relop> <simple expression>
 	 *
-	 * @return Unused for now
+	 * Also generates a quad to jump to the false branch of a relative expression.
+	 *
+	 * @return Location of jump quad as an index into the quad table
 	 */
 	private int RelExpression() {
-		int recur = 0;
+		int left, right, saveRelop, ret, temp;
 		if (anyErrors) {
 			return -1;
 		}
 		trace("RelExpression", true);
 
-		recur = SimpleExpression();
-		recur = RelOp();
-		recur = SimpleExpression();
+		// Parse expression
+		left = SimpleExpression();
+		saveRelop = RelOp();
+		right = SimpleExpression();
+
+		// Generate code
+		temp = GenSymbol();
+		quads.AddQuad(interp.opcodeFor("SUB"), left, right, temp);
+		ret = quads.NextQuad();
+		quads.AddQuad(RelopToOpcode(saveRelop), temp, 0, 0); // jump destination set later
 
 		trace("RelExpression", false);
-		return recur;
+		return ret;
 	}
 
 	// =========================================================================
@@ -936,10 +975,10 @@ public class Syntactic {
 	 * Syntactically parses a relative operation in an logical expression
 	 * Production rule: <relop> -> $EQ | $LSS | $GTR | $NEQ | $LEQ | $GEQ
 	 *
-	 * @return Unused for now
+	 * @return Token code of parsed operator
 	 */
 	private int RelOp() {
-		int recur = 0;
+		int ret = 0;
 		if (anyErrors) {
 			return -1;
 		}
@@ -950,10 +989,11 @@ public class Syntactic {
 		    token.code != lex.codeFor("EQUL") && token.code != lex.codeFor("NEQL")) {
 			error("relative expression", token.lexeme);
 		}
+		ret = token.code;
 		token = lex.GetNextToken();
 
 		trace("RelOp", false);
-		return recur;
+		return ret;
 	}
 
 	// =========================================================================
@@ -1032,6 +1072,28 @@ public class Syntactic {
 	private int GenSymbol() {
 		String name = UUID.randomUUID().toString();
 		return symbolList.AddSymbol(name, SymbolTable.VARIABLE_USAGE, 0);
+	}
+
+	private int RelopToOpcode(int relop) {
+		int ret = 0;
+
+		if (relop == lex.codeFor("GTHN")) {
+			ret = interp.opcodeFor("JNP");
+		} else if (relop == lex.codeFor("LTHN")) {
+			ret = interp.opcodeFor("JNN");
+		} else if (relop == lex.codeFor("GRET")) {
+			ret = interp.opcodeFor("JN");
+		} else if (relop == lex.codeFor("LSET")) {
+			ret = interp.opcodeFor("JP");
+		} else if (relop == lex.codeFor("EQUL")) {
+			ret = interp.opcodeFor("JNZ");
+		} else if (relop == lex.codeFor("NEQL")) {
+			ret = interp.opcodeFor("JZ");
+		} else {
+			throw new RuntimeException("Invalid relop code");
+		}
+
+		return ret;
 	}
 
 	// repeatChar returns a string containing x repetitions of string s;
